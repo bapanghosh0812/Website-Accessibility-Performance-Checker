@@ -8,6 +8,7 @@
         type="button"
         class="icon-pill-btn"
         aria-label="Go to previous step"
+        title="Back"
         (click)="onBack()"
       >
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
@@ -20,7 +21,7 @@
   <div class="topbar__center" aria-live="polite">
     <span class="step-counter">
       @if (audit.step() <= 4) {
-        Run 1 · Step {{ audit.step() }} / 4
+        Run 1 · Step {{ audit.step() }} / 4 · {{ audit.deviceProfile() === 'mobile' ? 'Mobile 4G' : 'Desktop' }}
       } @else {
         Run 2 (Lighthouse JSON) · Step {{ audit.step() - 4 }} / 3
       }
@@ -48,31 +49,54 @@
 
 <main id="app-stage" class="stage" tabindex="-1">
   <!-- =====================================================================
-       STEP 1: SIMPLY THE LOGO + GIT REPO FIELD + BUTTON
+       STEP 1: LANDING HERO + QUICK PRESETS + INTERACTIVE PRO TOOLS + SEO HUB
        ===================================================================== -->
   @if (audit.step() === 1) {
     <section
       class="flow-view is-active"
       [class.is-exiting]="audit.isTransitioning()"
-      aria-label="Enter GitHub repository"
+      aria-label="Website Accessibility and Performance Checker"
     >
       <div class="intro-shell">
         <app-fresnel-logo />
 
+        <p class="brand-lead">
+          Audit any GitHub repository or live website URL for <strong>WCAG 2.2 AA/AAA Accessibility</strong>, <strong>Core Web Vitals (LCP, INP, CLS)</strong>, <strong>Technical SEO</strong>, and <strong>Web Security</strong>—with ready-to-merge git commits.
+        </p>
+
+        <!-- Device Emulation Profile Selector -->
+        <div class="device-profile-switch" role="group" aria-label="Target device emulation profile">
+          <button
+            type="button"
+            class="device-pill-btn"
+            [class.is-active]="audit.deviceProfile() === 'mobile'"
+            (click)="onSetDeviceProfile('mobile')"
+          >
+            <span>📱 Mobile 4G (CWV Field)</span>
+          </button>
+          <button
+            type="button"
+            class="device-pill-btn"
+            [class.is-active]="audit.deviceProfile() === 'desktop'"
+            (click)="onSetDeviceProfile('desktop')"
+          >
+            <span>💻 Desktop Broadband</span>
+          </button>
+        </div>
+
         <form class="minimal-repo-form" (ngSubmit)="onStartLiveAudit()" novalidate>
-          <label for="repo-url-input" class="sr-only">GitHub repository URL</label>
+          <label for="repo-url-input" class="sr-only">GitHub repository or live website URL</label>
           <div class="input-pill-shell">
             <input
               id="repo-url-input"
               name="repoUrl"
-              type="url"
+              type="text"
               class="repo-field"
-              placeholder="https://github.com/owner/repository"
+              placeholder="https://github.com/owner/repository or https://example.com"
               [ngModel]="repoUrl()"
               (ngModelChange)="repoUrl.set($event)"
               autocomplete="off"
               spellcheck="false"
-              required
             />
           </div>
 
@@ -89,11 +113,181 @@
               class="quiet-demo-link"
               (click)="onStartDemoAudit()"
             >
-              Or try demo mode
+              Or try instant demo mode
+            </button>
+            <span class="narrative-sep">·</span>
+            <button
+              type="button"
+              class="quiet-demo-link"
+              (click)="audit.openLighthouseJsonStep()"
+            >
+              Analyze Lighthouse .json report
             </button>
           </div>
         </form>
+
+        <!-- 1-Click Quick-Start Preset Targets -->
+        <div class="preset-targets-box" aria-label="Quick-start sample targets">
+          <span class="preset-targets-box__label">Instant 1-click audit presets:</span>
+          <div class="preset-chips-grid">
+            @for (preset of presetTargets; track preset.url) {
+              <button
+                type="button"
+                class="preset-chip"
+                (click)="onSelectPreset(preset.url)"
+              >
+                <span class="preset-chip__title">{{ preset.label }}</span>
+                <span class="preset-chip__tag">{{ preset.tag }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Recent Audit History Strip -->
+        @if (audit.history().length > 0) {
+          <div class="history-strip" aria-label="Recent audits">
+            <div class="history-strip__head">
+              <span>Recent audits ({{ audit.history().length }})</span>
+              <button type="button" class="text-action-btn" (click)="audit.clearHistory()">
+                Clear history
+              </button>
+            </div>
+            <div class="history-chips">
+              @for (item of audit.history(); track item.id) {
+                <button
+                  type="button"
+                  class="history-chip"
+                  (click)="onRestoreHistory(item)"
+                >
+                  <strong>{{ item.repoFullName }}</strong>
+                  <span>{{ item.commitsCount }} fixes · {{ item.deviceProfile }} · {{ item.timestamp }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        }
       </div>
+
+      <!-- Quick-Access Interactive AI & Engineering Studios -->
+      <section class="home-studios-showcase" aria-labelledby="studios-heading">
+        <div class="section-eyebrow-head">
+          <span class="soft-pill soft-pill--accent">15+ Built-in AI & Engineering Tools</span>
+          <h2 id="studios-heading" class="home-section-title">
+            Interactive Accessibility, Performance, SEO &amp; Security Studios
+          </h2>
+          <p class="home-section-subtitle">
+            Jump straight into any specialized engineering studio or run a full repository audit above.
+          </p>
+        </div>
+
+        <div class="studios-quick-grid">
+          <button
+            type="button"
+            class="studio-launch-card"
+            (click)="openInteractiveStudioFromHome('ai-fixer')"
+          >
+            <span class="studio-launch-card__badge">AI Studio</span>
+            <h3>AI Smart Code Refactor Studio</h3>
+            <p>Paste any HTML, Angular, React, or CSS snippet to automatically fix LCP, CLS, WCAG 2.2 ARIA labels, and DOM XSS sinks.</p>
+            <span class="studio-launch-card__cta">Open AI Code Fixer →</span>
+          </button>
+
+          <button
+            type="button"
+            class="studio-launch-card"
+            (click)="openInteractiveStudioFromHome('contrast-studio')"
+          >
+            <span class="studio-launch-card__badge">WCAG 2.2 AA/AAA</span>
+            <h3>Interactive Color Contrast Studio</h3>
+            <p>Test foreground &amp; background hex pairs against WCAG 2.2 AA (4.5:1) and AAA (7.0:1) with 1-click AI palette auto-correction.</p>
+            <span class="studio-launch-card__cta">Open Contrast Studio →</span>
+          </button>
+
+          <button
+            type="button"
+            class="studio-launch-card"
+            (click)="openInteractiveStudioFromHome('vitals')"
+          >
+            <span class="studio-launch-card__badge">Core Web Vitals</span>
+            <h3>LCP, INP &amp; CLS Vitals Simulator</h3>
+            <p>Simulate real-time field improvements across Largest Contentful Paint, Interaction to Next Paint, and Cumulative Layout Shift.</p>
+            <span class="studio-launch-card__cta">Open Vitals Simulator →</span>
+          </button>
+
+          <button
+            type="button"
+            class="studio-launch-card"
+            (click)="openInteractiveStudioFromHome('seo-generator')"
+          >
+            <span class="studio-launch-card__badge">Search Ranking</span>
+            <h3>SEO Meta &amp; Schema.org Generator</h3>
+            <p>Generate production-ready canonical tags, OpenGraph social cards, Twitter cards, and Schema.org JSON-LD structured data.</p>
+            <span class="studio-launch-card__cta">Open SEO Generator →</span>
+          </button>
+
+          <button
+            type="button"
+            class="studio-launch-card"
+            (click)="openInteractiveStudioFromHome('security-shield')"
+          >
+            <span class="studio-launch-card__badge">Zero-Trust CSP</span>
+            <h3>Security &amp; CSP Header Shield</h3>
+            <p>Generate strict Content-Security-Policy, HSTS preload, X-Frame-Options, and Permissions-Policy configs for Netlify, Nginx, or Express.</p>
+            <span class="studio-launch-card__cta">Open Security Shield →</span>
+          </button>
+
+          <button
+            type="button"
+            class="studio-launch-card"
+            (click)="audit.openLighthouseJsonStep()"
+          >
+            <span class="studio-launch-card__badge">Lighthouse LHR</span>
+            <h3>Lighthouse JSON Correlator</h3>
+            <p>Upload a Chrome DevTools Lighthouse Result (.json) file to map failing DOM selectors and metricSavings directly to git commits.</p>
+            <span class="studio-launch-card__cta">Analyze LHR JSON →</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- SEO-Rich Authority Content & FAQ Section for Search Engine Indexing -->
+      <section class="seo-authority-section" aria-labelledby="faq-heading">
+        <div class="section-eyebrow-head">
+          <span class="soft-pill">Why Engineers Choose Fresnel</span>
+          <h2 id="faq-heading" class="home-section-title">
+            Complete Website Accessibility &amp; Performance Optimization Suite
+          </h2>
+        </div>
+
+        <div class="faq-grid">
+          <article class="faq-card">
+            <h3>How does the Website Accessibility &amp; Performance Checker improve Google rankings?</h3>
+            <p>
+              Google’s Page Experience and Core Web Vitals signals directly reward fast Largest Contentful Paint (LCP &le; 2.5s), responsive Interaction to Next Paint (INP &le; 200ms), zero Cumulative Layout Shift (CLS &le; 0.1), mobile accessibility, and valid Schema.org JSON-LD structured data. Fresnel generates exact code diffs for every signal.
+            </p>
+          </article>
+
+          <article class="faq-card">
+            <h3>What WCAG 2.2 AA &amp; AAA accessibility rules are checked?</h3>
+            <p>
+              Fresnel inspects semantic landmarks, skip-navigation links, ARIA accessible names on icon buttons (SC 4.1.2), explicit form label associations (SC 3.3.2), text and non-text color contrast ratios (SC 1.4.3 &amp; 1.4.11), keyboard focus visibility, and screen reader live regions.
+            </p>
+          </article>
+
+          <article class="faq-card">
+            <h3>Is my source code or data safe during an audit?</h3>
+            <p>
+              Yes. Audits run deterministically in your browser with strict Content-Security-Policy (CSP), HSTS, X-Frame-Options DENY, and zero external credential storage. Your repository credentials never leave your machine—pull requests are applied locally via <code>git am</code> and <code>gh pr create</code>.
+            </p>
+          </article>
+
+          <article class="faq-card">
+            <h3>Can I export reports for my engineering team or clients?</h3>
+            <p>
+              Every audit can be exported with one click as a multi-commit Git Patch (<code>.patch</code>), Executive Markdown Report (<code>.md</code>), Machine-Readable JSON (<code>.json</code>), Spreadsheet CSV Matrix (<code>.csv</code>), or formatted Print/PDF report.
+            </p>
+          </article>
+        </div>
+      </section>
     </section>
   }
 
@@ -112,6 +306,8 @@
           <span>{{ plainText(session.currentStep.phase) }}</span>
           <span class="narrative-sep">·</span>
           <span class="narrative-repo">{{ session.repo.fullName }}</span>
+          <span class="narrative-sep">·</span>
+          <span>{{ session.progressPercent }}%</span>
         </div>
 
         <div class="narrative-hero">
@@ -127,6 +323,9 @@
           <div
             class="narrative-progress__track narrative-progress__track--indeterminate"
             role="progressbar"
+            [attr.aria-valuenow]="session.progressPercent"
+            aria-valuemin="0"
+            aria-valuemax="100"
             aria-label="Code audit in progress"
           >
             <div class="narrative-progress__fill"></div>
@@ -135,15 +334,13 @@
             <span>
               {{
                 session.runPhase === 'lhr'
-                  ? 'Analyzing Lighthouse report for ' + session.repo.fullName
-                  : 'Inspecting ' + session.repo.fullName
+                  ? 'Correlating Lighthouse JSON report for ' + session.repo.fullName
+                  : 'Inspecting ' + session.repo.fullName + ' (' + audit.deviceProfile() + ' profile)'
               }}
             </span>
-            @if (session.mode === 'demo' || audit.mode() === 'demo') {
-              <button type="button" class="text-action-btn" (click)="audit.skipToReport()">
-                Skip to report →
-              </button>
-            }
+            <button type="button" class="text-action-btn" (click)="audit.skipToReport()">
+              Skip to report →
+            </button>
           </div>
         </div>
 
@@ -165,7 +362,7 @@
   }
 
   <!-- =====================================================================
-       STEP 3 (RUN 1) & STEP 7 (RUN 2: CATEGORIES IMPROVED WITH CODE)
+       STEP 3 (RUN 1) & STEP 7 (RUN 2): INTERACTIVE REPORT & 6 PRO STUDIOS
        ===================================================================== -->
   @if ((audit.step() === 3 || audit.step() === 7) && audit.session(); as session) {
     <section
@@ -177,25 +374,69 @@
         <header class="report-header">
           <div class="report-header__top">
             <span class="soft-pill">{{ session.repo.fullName }}</span>
+            @if (session.repo.language) {
+              <span class="soft-pill">{{ session.repo.language }}</span>
+            }
+            @if (session.repo.stars !== undefined) {
+              <span class="soft-pill">★ {{ session.repo.stars }}</span>
+            }
+            <div class="report-device-inline">
+              <button
+                type="button"
+                class="mini-device-btn"
+                [class.is-active]="audit.deviceProfile() === 'mobile'"
+                (click)="onSetDeviceProfile('mobile')"
+              >
+                📱 Mobile
+              </button>
+              <button
+                type="button"
+                class="mini-device-btn"
+                [class.is-active]="audit.deviceProfile() === 'desktop'"
+                (click)="onSetDeviceProfile('desktop')"
+              >
+                💻 Desktop
+              </button>
+            </div>
           </div>
 
           <h1 id="report-heading" class="report-title">
-            {{ session.runPhase === 'lhr' ? 'Lighthouse JSON audit report' : 'Code audit report' }}
+            {{ session.runPhase === 'lhr' ? 'Lighthouse JSON audit report' : 'Code audit & optimization report' }}
           </h1>
           <p class="report-subtitle">
             @if (session.runPhase === 'lhr') {
               Targeted code commits mapped directly to failing audits and DOM selectors in your Lighthouse Result (LHR) JSON report.
             } @else {
-              Select the static code commits you would like to include in a pull request, download as a patch, or continue to a second run with a Lighthouse JSON report.
+              Select the atomic code commits to include in your pull request, simulate Core Web Vitals gains, or use the interactive AI, WCAG Contrast, SEO, and Security studios below.
             }
           </p>
 
-          <!-- CATEGORIES IMPROVED WITH CODE (NO NUMERIC SCORES) -->
+          <!-- DYNAMIC BEFORE vs. AFTER SCORE GAUGES (0-100) -->
+          <div class="score-gauges-grid" aria-label="Projected audit score improvements">
+            @for (gauge of audit.scoreGauges(); track gauge.id) {
+              <div class="score-gauge-card">
+                <div class="score-gauge-card__top">
+                  <span class="score-gauge-card__label">{{ gauge.label }}</span>
+                  <span class="score-gauge-card__delta">+{{ gauge.delta }} pts</span>
+                </div>
+                <div class="score-gauge-card__nums">
+                  <span class="score-gauge-card__before">{{ gauge.beforeScore }}</span>
+                  <span class="score-gauge-card__arrow">→</span>
+                  <span class="score-gauge-card__after">{{ gauge.afterScore }}</span>
+                </div>
+                <div class="score-gauge-bar">
+                  <div class="score-gauge-bar__fill" [style.width.%]="gauge.afterScore"></div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- CATEGORIES IMPROVED WITH CODE -->
           @if (categoriesImprovedList().length > 0) {
             <div class="categories-improved-strip" aria-label="Categories improved with code">
               <div class="categories-improved-strip__head">
                 <span class="categories-improved-strip__title">Categories improved with code</span>
-                <span class="categories-improved-strip__note">Static code audit · verified by commit coverage</span>
+                <span class="categories-improved-strip__note">Verified by atomic git commit coverage</span>
               </div>
               <div class="categories-improved-grid">
                 @for (item of categoriesImprovedList(); track item.id) {
@@ -213,7 +454,92 @@
             </div>
           }
 
-          <div class="report-controls">
+          <!-- WORKSPACE STUDIO SWITCHER TABS -->
+          <nav class="workspace-tabs" aria-label="Audit workspace studios">
+            <button
+              type="button"
+              class="workspace-tab-btn"
+              [class.is-active]="audit.activeTab() === 'commits'"
+              (click)="audit.activeTab.set('commits')"
+            >
+              <span>1. Commits &amp; Fixes ({{ audit.totalCommitsCount() }})</span>
+            </button>
+            <button
+              type="button"
+              class="workspace-tab-btn"
+              [class.is-active]="audit.activeTab() === 'vitals'"
+              (click)="audit.activeTab.set('vitals')"
+            >
+              <span>2. Core Web Vitals Simulator</span>
+            </button>
+            <button
+              type="button"
+              class="workspace-tab-btn"
+              [class.is-active]="audit.activeTab() === 'ai-fixer'"
+              (click)="audit.activeTab.set('ai-fixer')"
+            >
+              <span>3. AI Code Refactor Studio</span>
+            </button>
+            <button
+              type="button"
+              class="workspace-tab-btn"
+              [class.is-active]="audit.activeTab() === 'contrast-studio'"
+              (click)="audit.activeTab.set('contrast-studio')"
+            >
+              <span>4. WCAG Contrast Studio</span>
+            </button>
+            <button
+              type="button"
+              class="workspace-tab-btn"
+              [class.is-active]="audit.activeTab() === 'seo-generator'"
+              (click)="audit.activeTab.set('seo-generator')"
+            >
+              <span>5. SEO &amp; Schema Generator</span>
+            </button>
+            <button
+              type="button"
+              class="workspace-tab-btn"
+              [class.is-active]="audit.activeTab() === 'security-shield'"
+              (click)="audit.activeTab.set('security-shield')"
+            >
+              <span>6. Security &amp; CSP Shield</span>
+            </button>
+          </nav>
+        </header>
+
+        <!-- =================================================================
+             TAB 1: ATOMIC COMMITS & DIFFS
+             ================================================================= -->
+        @if (audit.activeTab() === 'commits') {
+          <!-- Search & Impact Filter Toolbar -->
+          <div class="search-filter-bar">
+            <div class="search-input-wrap">
+              <label for="commit-search-input" class="sr-only">Search commits by file, rule, or keyword</label>
+              <input
+                id="commit-search-input"
+                type="search"
+                class="commit-search-input"
+                placeholder="Search commits by file, rule ID, WCAG criterion, or keyword..."
+                [ngModel]="audit.searchQuery()"
+                (ngModelChange)="audit.searchQuery.set($event)"
+              />
+            </div>
+
+            <div class="impact-filter-pills" role="group" aria-label="Filter by severity impact">
+              @for (level of ['all', 'Critical', 'High', 'Medium']; track level) {
+                <button
+                  type="button"
+                  class="impact-pill"
+                  [class.is-active]="audit.impactFilter() === level"
+                  (click)="audit.impactFilter.set($any(level))"
+                >
+                  {{ level === 'all' ? 'All severities' : level }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="report-controls" style="margin-bottom: 1.25rem;">
             <div class="category-pills" role="tablist" aria-label="Filter by audit category">
               @for (cat of visibleCategories(); track cat.key) {
                 <button
@@ -245,102 +571,520 @@
           </div>
 
           @if (session.runPhase === 'static' && audit.categoryFilter() === 'security') {
-            <div class="security-context-note" role="note">
+            <div class="security-context-note" role="note" style="margin-bottom: 1.25rem;">
               <div class="security-context-note__head">
                 <span class="security-light-badge">Light</span>
                 <strong>Web application security findings</strong>
               </div>
               <p>
-                A lightweight static scan for top common web application security issues and unsafe patterns (DOM XSS sinks, exposed client secrets or token storage, and unvalidated open redirects) rather than a deep security audit. Excluded during Lighthouse JSON runs.
+                A static scan for common web application security issues and unsafe patterns (DOM XSS sinks, exposed client secrets or token storage, and unvalidated open redirects).
               </p>
             </div>
           }
-        </header>
 
-        <!-- Commit Cards List -->
-        <div class="report-list" role="region" aria-label="Generated git commits">
-          @for (commit of audit.filteredCommits(); track commit.id; let i = $index) {
-            <article class="commit-card" [class.is-unchecked]="!isSelected(commit.id)">
-              <div class="commit-card__main">
-                <div class="commit-card__content">
-                  <div class="commit-card__eyebrow">
-                    <span class="commit-index">{{ (i + 1).toString().padStart(2, '0') }}</span>
-                    <span class="commit-cat-badge">{{ commit.categoryLabel }}</span>
-                    @if (commit.securityContext) {
-                      <span class="security-light-badge">{{ commit.securityContext }}</span>
+          <!-- Commit Cards List -->
+          <div class="report-list" role="region" aria-label="Generated git commits">
+            @for (commit of audit.filteredCommits(); track commit.id; let i = $index) {
+              <article class="commit-card" [class.is-unchecked]="!isSelected(commit.id)">
+                <div class="commit-card__main">
+                  <div class="commit-card__content">
+                    <div class="commit-card__eyebrow">
+                      <span class="commit-index">{{ (i + 1).toString().padStart(2, '0') }}</span>
+                      <span class="commit-cat-badge">{{ commit.categoryLabel }}</span>
+                      @if (commit.impact) {
+                        <span
+                          class="severity-badge"
+                          [class.severity-badge--critical]="commit.impact === 'Critical'"
+                          [class.severity-badge--high]="commit.impact === 'High'"
+                        >
+                          {{ commit.impact }}
+                        </span>
+                      }
+                      @if (commit.estimatedGain) {
+                        <span class="commit-impact-tag">{{ commit.estimatedGain }}</span>
+                      }
+                      @if (commit.wcagReference) {
+                        <span class="wcag-ref-pill">{{ commit.wcagReference }}</span>
+                      }
+                      @if (commit.securityContext) {
+                        <span class="security-light-badge">{{ commit.securityContext }}</span>
+                      }
+                      <span class="commit-sha-pill">{{ commit.sha }}</span>
+                    </div>
+
+                    <h2 class="commit-card__title">{{ imperativeHeadline(commit.title) }}</h2>
+                    <p class="commit-card__summary">{{ detailTense(commit.summary, 'done', 280) }}</p>
+
+                    <!-- LHR JSON Area Improved Callout (Shown in Run 2) -->
+                    @if (session.runPhase === 'lhr' && commit.lhrAreaImproved) {
+                      <div class="lhr-target-box">
+                        <div class="lhr-target-row">
+                          <span class="lhr-target-key">Category and audit improved:</span>
+                          <code>{{ plainText(commit.lhrAreaImproved) }}</code>
+                        </div>
+                        @if (commit.lhrTargetSelector) {
+                          <div class="lhr-target-row">
+                            <span class="lhr-target-key">JSON target node:</span>
+                            <code>{{ plainText(commit.lhrTargetSelector) }}</code>
+                          </div>
+                        }
+                      </div>
                     }
-                    <span class="commit-sha-pill">{{ commit.sha }}</span>
-                    @if (commit.securityPattern) {
-                      <span class="commit-pattern-tag">{{ commit.securityPattern }}</span>
-                    }
+
+                    <div class="commit-card__footer">
+                      <button
+                        type="button"
+                        class="diff-toggle-btn"
+                        (click)="audit.toggleDiff(commit.id)"
+                      >
+                        {{ isDiffExpanded(commit.id) ? 'Hide diff' : 'View diff' }}
+                      </button>
+
+                      @if (commit.aiExplanation) {
+                        <button
+                          type="button"
+                          class="diff-toggle-btn diff-toggle-btn--ai"
+                          (click)="audit.toggleAiExplain(commit.id)"
+                        >
+                          {{ isAiExpanded(commit.id) ? '✦ Hide AI Root Cause' : '✦ AI Root Cause & Impact' }}
+                        </button>
+                      }
+
+                      <button
+                        type="button"
+                        class="diff-toggle-btn"
+                        (click)="copyText('diff-' + commit.id, commit.diff)"
+                      >
+                        {{ copiedKey() === 'diff-' + commit.id ? '✓ Copied diff' : 'Copy diff' }}
+                      </button>
+
+                      <span class="commit-files-text">
+                        {{ commit.files.join(', ') }} (+{{ commit.additions }} / -{{ commit.deletions }})
+                      </span>
+                    </div>
                   </div>
 
-                  <h2 class="commit-card__title">{{ imperativeHeadline(commit.title) }}</h2>
-                  <p class="commit-card__summary">{{ detailTense(commit.summary, 'done', 280) }}</p>
+                  <button
+                    type="button"
+                    class="friendly-check-btn"
+                    [class.is-checked]="isSelected(commit.id)"
+                    role="checkbox"
+                    [attr.aria-checked]="isSelected(commit.id)"
+                    [attr.aria-label]="'Include ' + imperativeHeadline(commit.title)"
+                    (click)="audit.toggleCommitSelection(commit.id)"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path d="M4.5 10.5l3.8 3.8 7.2-7.6" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </button>
+                </div>
 
-                  <!-- LHR JSON Area Improved Callout (Shown in Run 2) -->
-                  @if (session.runPhase === 'lhr' && commit.lhrAreaImproved) {
-                    <div class="lhr-target-box">
-                      <div class="lhr-target-row">
-                        <span class="lhr-target-key">Category and audit improved:</span>
-                        <code>{{ plainText(commit.lhrAreaImproved) }}</code>
-                      </div>
-                      @if (commit.lhrTargetSelector) {
-                        <div class="lhr-target-row">
-                          <span class="lhr-target-key">JSON target node:</span>
-                          <code>{{ plainText(commit.lhrTargetSelector) }}</code>
-                        </div>
+                @if (commit.aiExplanation && isAiExpanded(commit.id)) {
+                  <div class="ai-explanation-box">
+                    <div class="ai-explanation-box__head">
+                      <span class="ai-sparkle-pill">✦ AI Diagnostic &amp; Engineering Rationale</span>
+                      @if (commit.ruleId) {
+                        <code>Rule: {{ commit.ruleId }}</code>
+                      }
+                    </div>
+                    <p>{{ commit.aiExplanation }}</p>
+                  </div>
+                }
+
+                @if (isDiffExpanded(commit.id)) {
+                  @defer (on immediate) {
+                    <div class="commit-diff-drawer">
+                      @for (line of splitDiffLines(commit.diff); track $index) {
+                        <div
+                          class="diff-line"
+                          [class.diff-line--meta]="line.type === 'meta'"
+                          [class.diff-line--hunk]="line.type === 'hunk'"
+                          [class.diff-line--add]="line.type === 'add'"
+                          [class.diff-line--del]="line.type === 'del'"
+                        >{{ line.text }}</div>
                       }
                     </div>
                   }
+                }
+              </article>
+            } @empty {
+              <div class="empty-filter-state">
+                <p>No commits match your current search or filter criteria.</p>
+                <button
+                  type="button"
+                  class="secondary-flow-btn"
+                  (click)="audit.searchQuery.set(''); audit.impactFilter.set('all'); audit.categoryFilter.set('all')"
+                >
+                  Reset filters
+                </button>
+              </div>
+            }
+          </div>
+        }
 
-                  <div class="commit-card__footer">
-                    <button
-                      type="button"
-                      class="diff-toggle-btn"
-                      (click)="audit.toggleDiff(commit.id)"
-                    >
-                      {{ isDiffExpanded(commit.id) ? 'Hide diff' : 'View diff' }}
-                    </button>
-                    <span class="commit-files-text">
-                      {{ commit.files.join(', ') }}
-                    </span>
+        <!-- =================================================================
+             TAB 2: CORE WEB VITALS & BUNDLE BUDGET SIMULATOR
+             ================================================================= -->
+        @if (audit.activeTab() === 'vitals') {
+          <section class="studio-panel" aria-label="Core Web Vitals Simulator">
+            <div class="studio-panel__head">
+              <div>
+                <span class="soft-pill soft-pill--accent">Real-Time CWV Telemetry Simulator</span>
+                <h2>Core Web Vitals Before vs. After Selected Commits</h2>
+                <p>
+                  Toggle individual performance commits in Tab 1 or switch between Mobile 4G and Desktop to simulate field metric improvements.
+                </p>
+              </div>
+            </div>
+
+            <div class="vitals-grid">
+              @for (vital of audit.coreWebVitals(); track vital.id) {
+                <article class="vital-card">
+                  <div class="vital-card__top">
+                    <span class="vital-acronym">{{ vital.acronym }}</span>
+                    <span class="vital-gain-badge">{{ vital.deltaLabel }}</span>
+                  </div>
+                  <h3 class="vital-card__title">{{ vital.label }}</h3>
+                  <div class="vital-card__comparison">
+                    <span class="vital-before">{{ vital.beforeValue }}</span>
+                    <span class="vital-arrow">→</span>
+                    <span class="vital-after">{{ vital.afterValue }}</span>
+                  </div>
+                  <p class="vital-card__desc">{{ vital.description }}</p>
+                </article>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- =================================================================
+             TAB 3: AI SMART CODE REFACTOR STUDIO
+             ================================================================= -->
+        @if (audit.activeTab() === 'ai-fixer') {
+          <section class="studio-panel" aria-label="AI Smart Code Refactor Studio">
+            <div class="studio-panel__head">
+              <div>
+                <span class="soft-pill soft-pill--accent">Interactive AI Remediator</span>
+                <h2>AI Smart Code Refactor Studio</h2>
+                <p>
+                  Select a real-world antipattern or paste your own HTML/TypeScript/CSS snippet to automatically remediate WCAG 2.2, Core Web Vitals, and DOM XSS vulnerabilities.
+                </p>
+              </div>
+            </div>
+
+            <div class="preset-chips-grid" style="margin-bottom: 1.15rem;">
+              @for (preset of codePresets; track preset.id) {
+                <button
+                  type="button"
+                  class="preset-chip"
+                  [class.is-active]="selectedCodePresetId() === preset.id"
+                  (click)="selectCodePreset(preset.id)"
+                >
+                  <span class="preset-chip__title">{{ preset.label }}</span>
+                  <span class="preset-chip__tag">{{ preset.category }}</span>
+                </button>
+              }
+            </div>
+
+            <div class="studio-split-grid">
+              <div class="studio-editor-col">
+                <div class="studio-col-head">
+                  <strong>Input Source Snippet</strong>
+                  <button
+                    type="button"
+                    class="primary-flow-btn studio-mini-btn"
+                    (click)="runAiCodeRefactor()"
+                  >
+                    <span>✦ Run AI Refactor</span>
+                  </button>
+                </div>
+                <textarea
+                  rows="10"
+                  class="lhr-textarea"
+                  [ngModel]="customCodeInput()"
+                  (ngModelChange)="customCodeInput.set($event)"
+                  aria-label="Source code to refactor"
+                  spellcheck="false"
+                ></textarea>
+              </div>
+
+              <div class="studio-editor-col">
+                <div class="studio-col-head">
+                  <strong>Hardened Production Output</strong>
+                  <button
+                    type="button"
+                    class="secondary-flow-btn studio-mini-btn"
+                    (click)="copyText('aiRefactorOut', refactoredCodeOutput())"
+                  >
+                    <span>{{ copiedKey() === 'aiRefactorOut' ? '✓ Copied!' : 'Copy fixed code' }}</span>
+                  </button>
+                </div>
+                <pre class="studio-code-output"><code>{{ refactoredCodeOutput() }}</code></pre>
+              </div>
+            </div>
+
+            <div class="ai-improvements-list">
+              <strong>Remediations applied automatically:</strong>
+              <ul>
+                @for (note of refactorImprovements(); track note) {
+                  <li>✓ {{ note }}</li>
+                }
+              </ul>
+            </div>
+          </section>
+        }
+
+        <!-- =================================================================
+             TAB 4: INTERACTIVE WCAG 2.2 AA / AAA COLOR CONTRAST STUDIO
+             ================================================================= -->
+        @if (audit.activeTab() === 'contrast-studio') {
+          <section class="studio-panel" aria-label="WCAG 2.2 Color Contrast Studio">
+            <div class="studio-panel__head">
+              <div>
+                <span class="soft-pill soft-pill--accent">WCAG 2.2 SC 1.4.3 &amp; 1.4.11</span>
+                <h2>Interactive Color Contrast &amp; Luminance Studio</h2>
+                <p>
+                  Test any foreground and background color pair in real time or click <strong>Auto-Fix Contrast</strong> to compute the nearest accessible hex code.
+                </p>
+              </div>
+            </div>
+
+            <div class="contrast-studio-grid">
+              <div class="contrast-controls-card">
+                <div class="color-picker-row">
+                  <label for="fg-color-text">Foreground (Text / Icon) Hex</label>
+                  <div class="color-input-pair">
+                    <input
+                      type="color"
+                      aria-label="Foreground color picker"
+                      [ngModel]="fgColor()"
+                      (ngModelChange)="fgColor.set($event)"
+                    />
+                    <input
+                      id="fg-color-text"
+                      type="text"
+                      class="color-hex-field"
+                      [ngModel]="fgColor()"
+                      (ngModelChange)="fgColor.set($event)"
+                    />
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  class="friendly-check-btn"
-                  [class.is-checked]="isSelected(commit.id)"
-                  role="checkbox"
-                  [attr.aria-checked]="isSelected(commit.id)"
-                  [attr.aria-label]="'Include ' + imperativeHeadline(commit.title)"
-                  (click)="audit.toggleCommitSelection(commit.id)"
-                >
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                    <path d="M4.5 10.5l3.8 3.8 7.2-7.6" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                </button>
+                <div class="color-picker-row">
+                  <label for="bg-color-text">Background Surface Hex</label>
+                  <div class="color-input-pair">
+                    <input
+                      type="color"
+                      aria-label="Background color picker"
+                      [ngModel]="bgColor()"
+                      (ngModelChange)="bgColor.set($event)"
+                    />
+                    <input
+                      id="bg-color-text"
+                      type="text"
+                      class="color-hex-field"
+                      [ngModel]="bgColor()"
+                      (ngModelChange)="bgColor.set($event)"
+                    />
+                  </div>
+                </div>
+
+                <div class="contrast-action-buttons">
+                  <button
+                    type="button"
+                    class="secondary-flow-btn studio-mini-btn"
+                    (click)="swapContrastColors()"
+                  >
+                    ⇄ Swap Colors
+                  </button>
+                  <button
+                    type="button"
+                    class="primary-flow-btn studio-mini-btn"
+                    (click)="autoFixContrast(4.6)"
+                  >
+                    ✦ Auto-Fix AA (4.5:1+)
+                  </button>
+                  <button
+                    type="button"
+                    class="primary-flow-btn studio-mini-btn"
+                    (click)="autoFixContrast(7.1)"
+                  >
+                    ✦ Auto-Fix AAA (7.0:1+)
+                  </button>
+                </div>
               </div>
 
-              @if (isDiffExpanded(commit.id)) {
-                @defer (on immediate) {
-                  <div class="commit-diff-drawer">
-                    @for (line of splitDiffLines(commit.diff); track $index) {
-                      <div
-                        class="diff-line"
-                        [class.diff-line--meta]="line.type === 'meta'"
-                        [class.diff-line--hunk]="line.type === 'hunk'"
-                        [class.diff-line--add]="line.type === 'add'"
-                        [class.diff-line--del]="line.type === 'del'"
-                      >{{ line.text }}</div>
-                    }
-                  </div>
-                }
-              }
-            </article>
-          }
-        </div>
+              <div
+                class="contrast-preview-card"
+                [style.backgroundColor]="bgColor()"
+                [style.color]="fgColor()"
+              >
+                <div class="contrast-preview-ratio">
+                  <span>{{ wcagEvaluation().ratioText }}</span>
+                  <span class="contrast-status-pill">{{ wcagEvaluation().badgeLabel }}</span>
+                </div>
+                <h3>Live Typography &amp; UI Component Preview</h3>
+                <p>
+                  Accessible contrast ensures every reader—including users with low vision, color vision deficiency, or high ambient screen glare—can read content effortlessly.
+                </p>
+              </div>
+            </div>
+
+            <div class="wcag-matrix-grid">
+              <div class="wcag-matrix-item" [class.is-pass]="wcagEvaluation().normalAA">
+                <strong>Normal Text AA (4.5:1)</strong>
+                <span>{{ wcagEvaluation().normalAA ? '✓ PASS' : '✕ FAIL' }}</span>
+              </div>
+              <div class="wcag-matrix-item" [class.is-pass]="wcagEvaluation().normalAAA">
+                <strong>Normal Text AAA (7.0:1)</strong>
+                <span>{{ wcagEvaluation().normalAAA ? '✓ PASS' : '✕ FAIL' }}</span>
+              </div>
+              <div class="wcag-matrix-item" [class.is-pass]="wcagEvaluation().largeAA">
+                <strong>Large Text AA (3.0:1)</strong>
+                <span>{{ wcagEvaluation().largeAA ? '✓ PASS' : '✕ FAIL' }}</span>
+              </div>
+              <div class="wcag-matrix-item" [class.is-pass]="wcagEvaluation().uiComponentsAA">
+                <strong>UI Controls &amp; Icons (3.0:1)</strong>
+                <span>{{ wcagEvaluation().uiComponentsAA ? '✓ PASS' : '✕ FAIL' }}</span>
+              </div>
+            </div>
+          </section>
+        }
+
+        <!-- =================================================================
+             TAB 5: SEO META, OPENGRAPH & SCHEMA.ORG JSON-LD GENERATOR
+             ================================================================= -->
+        @if (audit.activeTab() === 'seo-generator') {
+          <section class="studio-panel" aria-label="SEO and Schema.org Generator">
+            <div class="studio-panel__head">
+              <div>
+                <span class="soft-pill soft-pill--accent">Search Engine Dominance</span>
+                <h2>SEO Meta, OpenGraph &amp; Schema.org JSON-LD Generator</h2>
+                <p>
+                  Customize your site metadata below and copy the complete HTML <code>&lt;head&gt;</code> + structured data snippet for maximum Google Search &amp; AI Overview visibility.
+                </p>
+              </div>
+            </div>
+
+            <div class="seo-form-grid">
+              <label>
+                <span>Page Title (50–60 chars recommended)</span>
+                <input
+                  type="text"
+                  class="commit-search-input"
+                  [ngModel]="seoTitle()"
+                  (ngModelChange)="seoTitle.set($event)"
+                />
+              </label>
+
+              <label>
+                <span>Canonical Production URL</span>
+                <input
+                  type="url"
+                  class="commit-search-input"
+                  [ngModel]="seoUrl()"
+                  (ngModelChange)="seoUrl.set($event)"
+                />
+              </label>
+
+              <label>
+                <span>Meta Description (140–160 chars recommended)</span>
+                <textarea
+                  rows="2"
+                  class="lhr-textarea"
+                  [ngModel]="seoDescription()"
+                  (ngModelChange)="seoDescription.set($event)"
+                ></textarea>
+              </label>
+
+              <label>
+                <span>Target Search Keywords</span>
+                <input
+                  type="text"
+                  class="commit-search-input"
+                  [ngModel]="seoKeywords()"
+                  (ngModelChange)="seoKeywords.set($event)"
+                />
+              </label>
+            </div>
+
+            <div class="studio-col-head" style="margin-top: 1rem;">
+              <strong>Generated HTML &lt;head&gt; + JSON-LD Structured Data</strong>
+              <button
+                type="button"
+                class="primary-flow-btn studio-mini-btn"
+                (click)="copyText('seoHead', generatedSeoHeadSnippet())"
+              >
+                <span>{{ copiedKey() === 'seoHead' ? '✓ Copied SEO Snippet!' : 'Copy SEO Code' }}</span>
+              </button>
+            </div>
+            <pre class="studio-code-output"><code>{{ generatedSeoHeadSnippet() }}</code></pre>
+          </section>
+        }
+
+        <!-- =================================================================
+             TAB 6: ENTERPRISE SECURITY & CSP HEADER SHIELD GENERATOR
+             ================================================================= -->
+        @if (audit.activeTab() === 'security-shield') {
+          <section class="studio-panel" aria-label="Enterprise Security Header Generator">
+            <div class="studio-panel__head">
+              <div>
+                <span class="soft-pill soft-pill--accent">OWASP &amp; Zero-Trust Hardening</span>
+                <h2>Content-Security-Policy (CSP) &amp; HSTS Header Shield</h2>
+                <p>
+                  Protect your deployment against XSS, clickjacking, MIME sniffing, and unauthorized framing. Choose your server platform and copy the production config.
+                </p>
+              </div>
+            </div>
+
+            <div class="impact-filter-pills" style="margin-bottom: 1rem;">
+              <button
+                type="button"
+                class="impact-pill"
+                [class.is-active]="securityTargetPlatform() === 'netlify'"
+                (click)="securityTargetPlatform.set('netlify')"
+              >
+                Netlify (netlify.toml)
+              </button>
+              <button
+                type="button"
+                class="impact-pill"
+                [class.is-active]="securityTargetPlatform() === 'nginx'"
+                (click)="securityTargetPlatform.set('nginx')"
+              >
+                Nginx (nginx.conf)
+              </button>
+              <button
+                type="button"
+                class="impact-pill"
+                [class.is-active]="securityTargetPlatform() === 'express'"
+                (click)="securityTargetPlatform.set('express')"
+              >
+                Node.js / Express
+              </button>
+              <button
+                type="button"
+                class="impact-pill"
+                [class.is-active]="securityTargetPlatform() === 'meta'"
+                (click)="securityTargetPlatform.set('meta')"
+              >
+                HTML &lt;meta&gt; Tag
+              </button>
+            </div>
+
+            <div class="studio-col-head">
+              <strong>Hardened Security Policy Output</strong>
+              <button
+                type="button"
+                class="primary-flow-btn studio-mini-btn"
+                (click)="copyText('secHeaders', generatedSecurityHeaders())"
+              >
+                <span>{{ copiedKey() === 'secHeaders' ? '✓ Copied Security Config!' : 'Copy Security Config' }}</span>
+              </button>
+            </div>
+            <pre class="studio-code-output"><code>{{ generatedSecurityHeaders() }}</code></pre>
+          </section>
+        }
 
         <!-- Second Run Prompt Card (Shown on Run 1 Report) -->
         @if (session.runPhase === 'static') {
@@ -442,10 +1186,32 @@
           }
         }
 
+        <!-- Multi-Format Export Strip -->
+        <div class="export-formats-bar" aria-label="Export audit report in multiple formats">
+          <span class="export-formats-bar__label">Export full report:</span>
+          <div class="export-formats-bar__btns">
+            <button type="button" class="export-pill-btn" (click)="audit.openPatchGuideAndDownload()">
+              Git .patch
+            </button>
+            <button type="button" class="export-pill-btn" (click)="audit.exportReportAs('markdown')">
+              Markdown (.md)
+            </button>
+            <button type="button" class="export-pill-btn" (click)="audit.exportReportAs('json')">
+              JSON (.json)
+            </button>
+            <button type="button" class="export-pill-btn" (click)="audit.exportReportAs('csv')">
+              CSV (.csv)
+            </button>
+            <button type="button" class="export-pill-btn" (click)="audit.exportReportAs('print')">
+              Print / Save PDF
+            </button>
+          </div>
+        </div>
+
         <!-- Sticky Bottom Action Bar -->
         <footer class="report-action-bar">
           <div class="report-action-bar__summary">
-            <strong>{{ audit.selectedCount() }} of {{ audit.totalCommitsCount() }}</strong> selected
+            <strong>{{ audit.selectedCount() }} of {{ audit.totalCommitsCount() }}</strong> commits selected
           </div>
 
           <div class="report-action-bar__buttons">

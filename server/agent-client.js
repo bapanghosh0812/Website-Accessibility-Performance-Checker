@@ -30,19 +30,30 @@ export function parseRepoUrl(rawUrl, mode = 'live') {
     };
   }
 
-  const cleaned = (rawUrl || '').trim().replace(/\.git$/, '').replace(/\/+$/, '');
+  const cleaned = String(rawUrl || '')
+    .trim()
+    .replace(/^[<>'"`\s]+|[<>'"`\s]+$/g, '')
+    .replace(/\.git$/i, '')
+    .replace(/\/+$/, '');
+
   let owner = 'fresnel-sandbox';
   let repo = 'lumina-web-app';
 
-  const githubMatch = cleaned.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([^/\s]+)\/([^/\s#?]+)/i);
+  const githubMatch = cleaned.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([^/\s?#]+)\/([^/\s?#]+)/i);
   const shorthandMatch = cleaned.match(/^([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)$/);
+  const domainMatch = cleaned.match(/^(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+)(?:\/([^\s?#]*))?/i);
 
   if (githubMatch) {
-    owner = githubMatch[1];
-    repo = githubMatch[2];
-  } else if (shorthandMatch) {
-    owner = shorthandMatch[1];
-    repo = shorthandMatch[2];
+    owner = githubMatch[1].replace(/[^a-zA-Z0-9_.-]/g, '') || 'fresnel-sandbox';
+    repo = githubMatch[2].replace(/[^a-zA-Z0-9_.-]/g, '') || 'lumina-web-app';
+  } else if (shorthandMatch && !cleaned.includes('.com') && !cleaned.includes('.app') && !cleaned.includes('.org')) {
+    owner = shorthandMatch[1].replace(/[^a-zA-Z0-9_.-]/g, '') || 'fresnel-sandbox';
+    repo = shorthandMatch[2].replace(/[^a-zA-Z0-9_.-]/g, '') || 'lumina-web-app';
+  } else if (domainMatch) {
+    const hostParts = domainMatch[1].toLowerCase().split('.');
+    owner = hostParts[0] || 'web-platform';
+    const pathSlug = (domainMatch[2] || '').split('/').filter(Boolean)[0];
+    repo = (pathSlug || hostParts.slice(0, -1).join('-') || 'web-app').replace(/[^a-zA-Z0-9_.-]/g, '');
   }
 
   const normalizedUrl = `https://github.com/${owner}/${repo}`;

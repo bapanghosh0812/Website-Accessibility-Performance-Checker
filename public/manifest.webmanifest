@@ -1,0 +1,20 @@
+{
+  "name": "Website Accessibility & Performance Checker — Fresnel AI Audit Suite",
+  "short_name": "Fresnel Audit",
+  "description": "Free AI Website Accessibility & Performance Checker for WCAG 2.2 compliance, Core Web Vitals, Lighthouse audits, SEO schema generation, and web security hardening.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070b14",
+  "theme_color": "#0052ff",
+  "orientation": "any",
+  "categories": ["developer tools", "productivity", "utilities", "accessibility", "seo"],
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

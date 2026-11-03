@@ -8,6 +8,14 @@ export type LighthouseCategory =
 
 export type AuditMode = 'live' | 'demo';
 export type AuditRunPhase = 'static' | 'lhr';
+export type DeviceProfile = 'mobile' | 'desktop';
+export type ActiveWorkspaceTab =
+  | 'commits'
+  | 'vitals'
+  | 'ai-fixer'
+  | 'contrast-studio'
+  | 'seo-generator'
+  | 'security-shield';
 
 export type FlowStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -25,6 +33,9 @@ export interface RepoMetadata {
   fullName: string;
   url: string;
   isDemo?: boolean;
+  stars?: number;
+  language?: string;
+  defaultBranch?: string;
 }
 
 export interface AuditCommit {
@@ -37,7 +48,10 @@ export interface AuditCommit {
   securityPattern?: string;
   ruleId: string;
   ruleTitle?: string;
-  impact?: string;
+  impact?: 'Critical' | 'High' | 'Medium';
+  estimatedGain?: string;
+  aiExplanation?: string;
+  wcagReference?: string;
   lhrAuditTitle?: string;
   lhrDisplayValue?: string;
   lhrTargetSelector?: string;
@@ -79,6 +93,7 @@ export interface AuditSession {
   interactionId: string;
   mode: AuditMode;
   runPhase: AuditRunPhase;
+  deviceProfile?: DeviceProfile;
   categoriesImproved?: CategoryImprovedItem[];
   lhrMeta?: {
     lighthouseVersion: string;
@@ -136,3 +151,33 @@ export interface PullRequestResult {
   filesTouched: string[];
 }
 
+export interface AuditHistoryEntry {
+  id: string;
+  repoFullName: string;
+  repoUrl: string;
+  mode: AuditMode;
+  runPhase: AuditRunPhase;
+  deviceProfile: DeviceProfile;
+  commitsCount: number;
+  timestamp: string;
+}
+
+export interface CoreVitalMetric {
+  id: string;
+  acronym: string;
+  label: string;
+  beforeValue: string;
+  afterValue: string;
+  deltaLabel: string;
+  unit: string;
+  status: 'good' | 'needs-improvement';
+  description: string;
+}
+
+export interface ScoreGaugeItem {
+  id: string;
+  label: string;
+  beforeScore: number;
+  afterScore: number;
+  delta: number;
+}

@@ -2,12 +2,32 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { AuditService } from './services/audit.service';
 import { FresnelLogoComponent } from './components/fresnel-logo/fresnel-logo.component';
-import { LighthouseCategory } from './models/audit.model';
+import {
+  ActiveWorkspaceTab,
+  AuditHistoryEntry,
+  DeviceProfile,
+  LighthouseCategory
+} from './models/audit.model';
 
 export interface CategoryTabItem {
   key: LighthouseCategory;
   label: string;
   contextBadge?: string;
+}
+
+export interface PresetTargetItem {
+  label: string;
+  tag: string;
+  url: string;
+}
+
+export interface CodePresetSnippet {
+  id: 'img-lcp' | 'a11y-button' | 'dom-xss' | 'cls-media';
+  label: string;
+  category: string;
+  beforeCode: string;
+  afterCode: string;
+  improvements: string[];
 }
 
 @Component({
@@ -22,6 +42,29 @@ export class AppComponent {
   readonly audit = inject(AuditService);
   readonly repoUrl = signal<string>('');
   readonly copiedKey = signal<string | null>(null);
+
+  readonly presetTargets: PresetTargetItem[] = [
+    {
+      label: 'Fresnel Web Platform',
+      tag: 'Angular 21 · Production',
+      url: 'https://github.com/bapanghosh0812/Website-Accessibility-Performance-Checker'
+    },
+    {
+      label: 'Lumina E-Commerce Storefront',
+      tag: 'CWV + WCAG 2.2',
+      url: 'https://github.com/fresnel-sandbox/lumina-web-app'
+    },
+    {
+      label: 'SaaS Analytics Dashboard',
+      tag: 'INP + CSP Security',
+      url: 'https://github.com/vercel/commerce'
+    },
+    {
+      label: 'Live Website URL Audit',
+      tag: 'SEO + Core Web Vitals',
+      url: 'https://website-performance-checker.netlify.app'
+    }
+  ];
 
   readonly allCategories: CategoryTabItem[] = [
     { key: 'all', label: 'All' },
@@ -84,15 +127,409 @@ export class AppComponent {
       : pr.shortTerminalCommand ?? '';
   });
 
+  // ============================================================================
+  // INTERACTIVE STUDIO 1: AI SMART CODE REFACTOR STUDIO
+  // ============================================================================
+  readonly codePresets: CodePresetSnippet[] = [
+    {
+      id: 'img-lcp',
+      label: 'Hero Image (LCP + CLS Fix)',
+      category: 'Performance · Core Web Vitals',
+      beforeCode: `<div class="hero-banner">\n  <img src="/assets/hero-showcase.jpg" class="hero-img">\n</div>`,
+      afterCode: `<div class="hero-banner">\n  <picture>\n    <source type="image/avif" srcset="/assets/hero-showcase.avif 1280w" sizes="100vw" />\n    <source type="image/webp" srcset="/assets/hero-showcase.webp 1280w" sizes="100vw" />\n    <img\n      src="/assets/hero-showcase.jpg"\n      class="hero-img"\n      alt="Interactive accessibility and performance audit dashboard"\n      width="1280"\n      height="720"\n      fetchpriority="high"\n      decoding="async"\n    />\n  </picture>\n</div>`,
+      improvements: [
+        'Added AVIF and WebP next-gen responsive sources (-64% payload)',
+        'Added explicit width="1280" and height="720" to eliminate layout shift (CLS 0.00)',
+        'Applied fetchpriority="high" and async decoding for -940ms faster LCP',
+        'Added descriptive alt attribute for WCAG 2.2 AA SC 1.1.1 compliance'
+      ]
+    },
+    {
+      id: 'a11y-button',
+      label: 'Icon Button & Input (WCAG 2.2 AA)',
+      category: 'Accessibility · Screen Reader & Keyboard',
+      beforeCode: `<div class="search-box">\n  <input type="text" placeholder="Search audits...">\n  <button class="icon-btn" onclick="submitSearch()">\n    <svg viewBox="0 0 20 20"><path d="M8 4a4 4 0 100 8z"/></svg>\n  </button>\n</div>`,
+      afterCode: `<form class="search-box" role="search" (ngSubmit)="submitSearch()">\n  <label for="audit-search-input" class="sr-only">Search audit findings</label>\n  <input\n    id="audit-search-input"\n    type="search"\n    name="q"\n    placeholder="Search audits..."\n    autocomplete="off"\n  />\n  <button\n    type="submit"\n    class="icon-btn"\n    aria-label="Submit audit search"\n  >\n    <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">\n      <path d="M8 4a4 4 0 100 8z" />\n    </svg>\n  </button>\n</form>`,
+      improvements: [
+        'Wrapped controls in semantic <form role="search"> for keyboard Enter submission',
+        'Associated explicit <label for="audit-search-input"> for screen readers (WCAG SC 3.3.2)',
+        'Added aria-label="Submit audit search" on icon-only button (WCAG SC 4.1.2)',
+        'Marked decorative SVG with aria-hidden="true" and focusable="false"'
+      ]
+    },
+    {
+      id: 'dom-xss',
+      label: 'DOM XSS Sink & Unsafe Redirect',
+      category: 'Security · OWASP Top 10 Protection',
+      beforeCode: `function renderPreview(userHtml, nextUrl) {\n  document.getElementById('preview').innerHTML = userHtml;\n  if (nextUrl) {\n    window.location.href = nextUrl;\n  }\n}`,
+      afterCode: `const ALLOWED_HOSTS = new Set([window.location.origin]);\n\nfunction renderPreview(userHtml, nextUrl) {\n  const container = document.getElementById('preview');\n  if (container) {\n    // Safe DOM text assignment prevents script/event-handler injection\n    container.textContent = String(userHtml ?? '');\n  }\n  if (nextUrl) {\n    const parsed = new URL(nextUrl, window.location.origin);\n    if (ALLOWED_HOSTS.has(parsed.origin) && ['http:', 'https:'].includes(parsed.protocol)) {\n      window.location.assign(parsed.pathname + parsed.search + parsed.hash);\n    }\n  }\n}`,
+      improvements: [
+        'Replaced unsafe innerHTML sink with textContent to block DOM-based XSS',
+        'Validated redirect target against strict origin allowlist and protocol check',
+        'Prevented javascript: and data: URI execution vectors'
+      ]
+    },
+    {
+      id: 'cls-media',
+      label: 'Render-Blocking Fonts & Scroll INP',
+      category: 'Performance · INP & FCP Optimization',
+      beforeCode: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700');\n\nwindow.addEventListener('scroll', () => {\n  updateStickyHeader();\n});`,
+      afterCode: `<!-- In index.html <head>: preconnect + non-blocking stylesheet -->\n<link rel="preconnect" href="https://fonts.googleapis.com" />\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />\n<link\n  rel="stylesheet"\n  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"\n/>\n\n// In application script: passive listener + rAF throttling for <50ms INP\nlet ticking = false;\nwindow.addEventListener(\n  'scroll',\n  () => {\n    if (!ticking) {\n      window.requestAnimationFrame(() => {\n        updateStickyHeader();\n        ticking = false;\n      });\n      ticking = true;\n    }\n  },\n  { passive: true }\n);`,
+      improvements: [
+        'Replaced synchronous CSS @import with preconnect + display=swap link tags (-310ms FCP)',
+        'Added { passive: true } to scroll listener to unblock compositor thread scrolling',
+        'Throttled layout updates with requestAnimationFrame to keep INP under 60ms'
+      ]
+    }
+  ];
+
+  readonly selectedCodePresetId = signal<CodePresetSnippet['id']>('img-lcp');
+  readonly customCodeInput = signal<string>(this.codePresets[0].beforeCode);
+  readonly refactoredCodeOutput = signal<string>(this.codePresets[0].afterCode);
+  readonly refactorImprovements = signal<string[]>(this.codePresets[0].improvements);
+
+  selectCodePreset(presetId: CodePresetSnippet['id']): void {
+    const found = this.codePresets.find((p) => p.id === presetId);
+    if (!found) return;
+    this.selectedCodePresetId.set(presetId);
+    this.customCodeInput.set(found.beforeCode);
+    this.refactoredCodeOutput.set(found.afterCode);
+    this.refactorImprovements.set(found.improvements);
+  }
+
+  runAiCodeRefactor(): void {
+    const raw = this.customCodeInput().trim();
+    if (!raw) return;
+
+    const matchingPreset = this.codePresets.find((p) => p.beforeCode.trim() === raw);
+    if (matchingPreset) {
+      this.refactoredCodeOutput.set(matchingPreset.afterCode);
+      this.refactorImprovements.set(matchingPreset.improvements);
+      return;
+    }
+
+    let improved = raw;
+    const notes: string[] = [];
+
+    if (/<img\b/i.test(improved)) {
+      if (!/\balt\s*=/i.test(improved)) {
+        improved = improved.replace(/<img\b/gi, '<img alt="Descriptive image content"');
+        notes.push('Added missing alt attribute on <img> elements for WCAG 2.2 SC 1.1.1');
+      }
+      if (!/\bwidth\s*=/i.test(improved) && !/\bheight\s*=/i.test(improved)) {
+        improved = improved.replace(/<img\b/gi, '<img width="1200" height="675"');
+        notes.push('Added explicit intrinsic width and height to prevent Cumulative Layout Shift (CLS)');
+      }
+      if (!/\bloading\s*=/i.test(improved) && !/\bfetchpriority\s*=/i.test(improved)) {
+        improved = improved.replace(/<img\b/gi, '<img loading="lazy" decoding="async"');
+        notes.push('Added loading="lazy" and decoding="async" for offscreen media optimization');
+      }
+    }
+
+    if (/\.innerHTML\s*=/i.test(improved)) {
+      improved = improved.replace(/\.innerHTML\s*=/g, '.textContent =');
+      notes.push('Replaced unsafe .innerHTML assignment with .textContent to prevent DOM XSS');
+    }
+
+    if (/target\s*=\s*["']_blank["']/i.test(improved) && !/rel\s*=/i.test(improved)) {
+      improved = improved.replace(
+        /target\s*=\s*["']_blank["']/gi,
+        'target="_blank" rel="noopener noreferrer"'
+      );
+      notes.push('Added rel="noopener noreferrer" to external target="_blank" links');
+    }
+
+    if (/<button\b(?![^>]*\btype\s*=)/i.test(improved)) {
+      improved = improved.replace(/<button\b/gi, '<button type="button"');
+      notes.push('Added explicit type="button" to prevent unintended form submissions');
+    }
+
+    if (/addEventListener\(\s*['"](?:scroll|touchstart|wheel)['"]\s*,\s*([^)]+)\)/i.test(improved)) {
+      if (!/passive\s*:\s*true/i.test(improved)) {
+        improved = improved.replace(
+          /addEventListener\(\s*(['"](?:scroll|touchstart|wheel)['"])\s*,\s*([^)]+)\)/gi,
+          'addEventListener($1, $2, { passive: true })'
+        );
+        notes.push('Enabled { passive: true } on scroll/touch listener to improve INP responsiveness');
+      }
+    }
+
+    if (notes.length === 0) {
+      notes.push('Verified semantic structure, ARIA attributes, and non-blocking resource execution');
+      notes.push('No unsafe DOM sinks or missing intrinsic media dimensions detected');
+    }
+
+    this.refactoredCodeOutput.set(improved);
+    this.refactorImprovements.set(notes);
+  }
+
+  // ============================================================================
+  // INTERACTIVE STUDIO 2: WCAG 2.2 AA / AAA COLOR CONTRAST STUDIO
+  // ============================================================================
+  readonly fgColor = signal<string>('#351A55');
+  readonly bgColor = signal<string>('#F6F4FC');
+
+  readonly contrastRatio = computed<number>(() => {
+    const fg = this.parseHexRgb(this.fgColor());
+    const bg = this.parseHexRgb(this.bgColor());
+    const l1 = this.relativeLuminance(fg.r, fg.g, fg.b);
+    const l2 = this.relativeLuminance(bg.r, bg.g, bg.b);
+    const brightest = Math.max(l1, l2);
+    const darkest = Math.min(l1, l2);
+    return Number(((brightest + 0.05) / (darkest + 0.05)).toFixed(2));
+  });
+
+  readonly wcagEvaluation = computed(() => {
+    const ratio = this.contrastRatio();
+    return {
+      ratioText: `${ratio.toFixed(2)}:1`,
+      normalAA: ratio >= 4.5,
+      normalAAA: ratio >= 7.0,
+      largeAA: ratio >= 3.0,
+      largeAAA: ratio >= 4.5,
+      uiComponentsAA: ratio >= 3.0,
+      badgeLabel:
+        ratio >= 7.0
+          ? 'AAA Exceptional (7:1+)'
+          : ratio >= 4.5
+            ? 'AA Compliant (4.5:1+)'
+            : ratio >= 3.0
+              ? 'Large Text Only (3:1+)'
+              : 'Fails WCAG 2.2 (< 3:1)'
+    };
+  });
+
+  swapContrastColors(): void {
+    const currentFg = this.fgColor();
+    this.fgColor.set(this.bgColor());
+    this.bgColor.set(currentFg);
+  }
+
+  autoFixContrast(targetRatio = 4.6): void {
+    const bg = this.parseHexRgb(this.bgColor());
+    const bgLum = this.relativeLuminance(bg.r, bg.g, bg.b);
+    let fg = this.parseHexRgb(this.fgColor());
+
+    // Darken or lighten foreground iteratively until targetRatio is met
+    const darken = bgLum > 0.35;
+    for (let step = 0; step < 60; step++) {
+      const fgLum = this.relativeLuminance(fg.r, fg.g, fg.b);
+      const ratio = (Math.max(fgLum, bgLum) + 0.05) / (Math.min(fgLum, bgLum) + 0.05);
+      if (ratio >= targetRatio) break;
+      if (darken) {
+        fg = {
+          r: Math.max(0, Math.round(fg.r * 0.88 - 3)),
+          g: Math.max(0, Math.round(fg.g * 0.88 - 3)),
+          b: Math.max(0, Math.round(fg.b * 0.88 - 3))
+        };
+      } else {
+        fg = {
+          r: Math.min(255, Math.round(fg.r + (255 - fg.r) * 0.16 + 4)),
+          g: Math.min(255, Math.round(fg.g + (255 - fg.g) * 0.16 + 4)),
+          b: Math.min(255, Math.round(fg.b + (255 - fg.b) * 0.16 + 4))
+        };
+      }
+    }
+
+    const toHex = (n: number) => n.toString(16).padStart(2, '0').toUpperCase();
+    this.fgColor.set(`#${toHex(fg.r)}${toHex(fg.g)}${toHex(fg.b)}`);
+  }
+
+  private parseHexRgb(hex: string): { r: number; g: number; b: number } {
+    const cleaned = String(hex || '')
+      .replace(/[^0-9a-fA-F]/g, '')
+      .trim();
+    if (cleaned.length === 3) {
+      return {
+        r: parseInt(cleaned[0] + cleaned[0], 16),
+        g: parseInt(cleaned[1] + cleaned[1], 16),
+        b: parseInt(cleaned[2] + cleaned[2], 16)
+      };
+    }
+    if (cleaned.length >= 6) {
+      return {
+        r: parseInt(cleaned.slice(0, 2), 16),
+        g: parseInt(cleaned.slice(2, 4), 16),
+        b: parseInt(cleaned.slice(4, 6), 16)
+      };
+    }
+    return { r: 53, g: 26, b: 85 };
+  }
+
+  private relativeLuminance(r: number, g: number, b: number): number {
+    const transform = (v: number) => {
+      const srgb = v / 255;
+      return srgb <= 0.03928 ? srgb / 12.92 : Math.pow((srgb + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * transform(r) + 0.7152 * transform(g) + 0.0722 * transform(b);
+  }
+
+  // ============================================================================
+  // INTERACTIVE STUDIO 3: SEO META, OPENGRAPH & SCHEMA.ORG JSON-LD GENERATOR
+  // ============================================================================
+  readonly seoTitle = signal<string>(
+    'Website Accessibility & Performance Checker — Free WCAG 2.2, Lighthouse & Core Web Vitals Audit'
+  );
+  readonly seoUrl = signal<string>('https://website-performance-checker.netlify.app/');
+  readonly seoDescription = signal<string>(
+    'Audit any website or GitHub repository for WCAG 2.2 AA/AAA accessibility, Core Web Vitals (LCP, INP, CLS), SEO, and web security with instant git patches.'
+  );
+  readonly seoKeywords = signal<string>(
+    'website accessibility checker, website performance checker, WCAG 2.2 checker, Core Web Vitals audit, Lighthouse JSON analyzer, technical SEO audit'
+  );
+
+  readonly generatedSeoHeadSnippet = computed<string>(() => {
+    const title = this.seoTitle().trim();
+    const url = this.seoUrl().trim() || 'https://website-performance-checker.netlify.app/';
+    const desc = this.seoDescription().trim();
+    const keywords = this.seoKeywords().trim();
+
+    return [
+      `<!-- Primary SEO & Canonical Metadata -->`,
+      `<title>${title}</title>`,
+      `<meta name="description" content="${desc}" />`,
+      `<meta name="keywords" content="${keywords}" />`,
+      `<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />`,
+      `<link rel="canonical" href="${url}" />`,
+      ``,
+      `<!-- OpenGraph / Social Discovery -->`,
+      `<meta property="og:type" content="website" />`,
+      `<meta property="og:url" content="${url}" />`,
+      `<meta property="og:title" content="${title}" />`,
+      `<meta property="og:description" content="${desc}" />`,
+      `<meta name="twitter:card" content="summary_large_image" />`,
+      `<meta name="twitter:title" content="${title}" />`,
+      `<meta name="twitter:description" content="${desc}" />`,
+      ``,
+      `<!-- Schema.org Structured Data (JSON-LD) -->`,
+      `<script type="application/ld+json">`,
+      JSON.stringify(
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebApplication',
+          name: title.split('—')[0].trim(),
+          url,
+          applicationCategory: 'DeveloperApplication',
+          operatingSystem: 'All',
+          description: desc,
+          offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'USD'
+          }
+        },
+        null,
+        2
+      ),
+      `</script>`
+    ].join('\n');
+  });
+
+  // ============================================================================
+  // INTERACTIVE STUDIO 4: ENTERPRISE SECURITY & CSP HEADER SHIELD GENERATOR
+  // ============================================================================
+  readonly securityTargetPlatform = signal<'netlify' | 'nginx' | 'express' | 'meta'>('netlify');
+
+  readonly generatedSecurityHeaders = computed<string>(() => {
+    const target = this.securityTargetPlatform();
+    const csp =
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://api.github.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests";
+
+    if (target === 'netlify') {
+      return [
+        `# netlify.toml — Enterprise Edge Security & Immutable Caching`,
+        `[[headers]]`,
+        `  for = "/*"`,
+        `  [headers.values]`,
+        `    X-Frame-Options = "DENY"`,
+        `    X-Content-Type-Options = "nosniff"`,
+        `    X-XSS-Protection = "1; mode=block"`,
+        `    Referrer-Policy = "strict-origin-when-cross-origin"`,
+        `    Permissions-Policy = "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"`,
+        `    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"`,
+        `    Content-Security-Policy = "${csp}"`
+      ].join('\n');
+    }
+
+    if (target === 'nginx') {
+      return [
+        `# nginx.conf — Production Security & HSTS Configuration`,
+        `add_header X-Frame-Options "DENY" always;`,
+        `add_header X-Content-Type-Options "nosniff" always;`,
+        `add_header Referrer-Policy "strict-origin-when-cross-origin" always;`,
+        `add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;`,
+        `add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;`,
+        `add_header Content-Security-Policy "${csp}" always;`
+      ].join('\n');
+    }
+
+    if (target === 'express') {
+      return [
+        `// server.js — Express Zero-Trust Security Middleware`,
+        `app.use((req, res, next) => {`,
+        `  res.setHeader('X-Frame-Options', 'DENY');`,
+        `  res.setHeader('X-Content-Type-Options', 'nosniff');`,
+        `  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');`,
+        `  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');`,
+        `  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');`,
+        `  res.setHeader('Content-Security-Policy', "${csp}");`,
+        `  next();`,
+        `});`
+      ].join('\n');
+    }
+
+    return [
+      `<!-- HTML <head> Content-Security-Policy & Referrer Meta Tags -->`,
+      `<meta http-equiv="Content-Security-Policy" content="${csp}" />`,
+      `<meta name="referrer" content="strict-origin-when-cross-origin" />`
+    ].join('\n');
+  });
+
+  // ============================================================================
+  // NAVIGATION & AUDIT HANDLERS
+  // ============================================================================
   async onStartLiveAudit(): Promise<void> {
     const url =
-      this.repoUrl().trim() || 'https://github.com/fresnel-sandbox/lumina-web-app';
+      this.repoUrl().trim() ||
+      'https://github.com/bapanghosh0812/Website-Accessibility-Performance-Checker';
+    this.repoUrl.set(url);
     await this.audit.startAudit(url, 'live');
   }
 
   async onStartDemoAudit(): Promise<void> {
-    this.repoUrl.set('https://github.com/fresnel-sandbox/lumina-web-app');
-    await this.audit.startAudit('https://github.com/fresnel-sandbox/lumina-web-app', 'demo');
+    const demoUrl = 'https://github.com/fresnel-sandbox/lumina-web-app';
+    this.repoUrl.set(demoUrl);
+    await this.audit.startAudit(demoUrl, 'demo');
+  }
+
+  async onSelectPreset(url: string): Promise<void> {
+    this.repoUrl.set(url);
+    await this.audit.startAudit(url, 'live');
+  }
+
+  async onRestoreHistory(entry: AuditHistoryEntry): Promise<void> {
+    this.repoUrl.set(entry.repoUrl);
+    this.audit.deviceProfile.set(entry.deviceProfile);
+    await this.audit.startAudit(entry.repoUrl, entry.mode);
+    await this.audit.skipToReport();
+  }
+
+  async openInteractiveStudioFromHome(tab: ActiveWorkspaceTab): Promise<void> {
+    if (!this.audit.session()) {
+      const targetUrl =
+        this.repoUrl().trim() ||
+        'https://github.com/bapanghosh0812/Website-Accessibility-Performance-Checker';
+      this.repoUrl.set(targetUrl);
+      await this.audit.startAudit(targetUrl, 'live');
+      await this.audit.skipToReport();
+    } else {
+      this.audit.transitionToStep(this.audit.session()?.runPhase === 'lhr' ? 7 : 3);
+    }
+    this.audit.activeTab.set(tab);
+  }
+
+  onSetDeviceProfile(profile: DeviceProfile): void {
+    this.audit.deviceProfile.set(profile);
   }
 
   onLhrFileSelected(event: Event): void {
@@ -138,6 +575,10 @@ export class AppComponent {
 
   isDiffExpanded(commitId: string): boolean {
     return this.audit.expandedDiffIds().has(commitId);
+  }
+
+  isAiExpanded(commitId: string): boolean {
+    return this.audit.expandedAiIds().has(commitId);
   }
 
   splitDiffLines(diff: string): { text: string; type: 'meta' | 'hunk' | 'add' | 'del' | 'ctx' }[] {

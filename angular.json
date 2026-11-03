@@ -29,7 +29,7 @@
             "assets": [
               "src/assets",
               {
-                "glob": "logo.svg",
+                "glob": "**/*",
                 "input": "public",
                 "output": "/"
               }

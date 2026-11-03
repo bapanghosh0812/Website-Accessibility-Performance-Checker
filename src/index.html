@@ -2,20 +2,132 @@
 <html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
-    <title>Website Accessibility &amp; Performance Checker</title>
+    <title>Website Accessibility &amp; Performance Checker — Free AI Web Audit, WCAG 2.2, Core Web Vitals, Lighthouse &amp; Security Scanner | Fresnel</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Fresnel audits any GitHub repository across Performance, Accessibility, Best Practices, SEO, and Light Web Application security findings."
+      content="Free Website Accessibility &amp; Performance Checker by Fresnel. Run instant WCAG 2.1/2.2 accessibility audits, Core Web Vitals (LCP, INP, CLS) speed checks, Lighthouse LHR JSON analysis, SEO schema generation, OWASP security header scans, and 1-click Git patch autofixes."
     />
+    <meta
+      name="keywords"
+      content="website accessibility checker, website performance checker, web accessibility audit, WCAG 2.2 checker, ADA compliance checker, Core Web Vitals checker, Lighthouse audit online, website speed test, SEO analyzer, web security scanner, color contrast checker WCAG, schema markup generator, GitHub code auditor, Fresnel"
+    />
+    <meta name="author" content="Fresnel Web Engineering" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="theme-color" content="#0052ff" />
+    <link rel="canonical" href="https://website-performance-checker.netlify.app/" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
+
+    <!-- Open Graph / Facebook / LinkedIn -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Website Accessibility &amp; Performance Checker — Fresnel" />
+    <meta property="og:url" content="https://website-performance-checker.netlify.app/" />
+    <meta
+      property="og:title"
+      content="Website Accessibility &amp; Performance Checker — WCAG 2.2, Core Web Vitals, Lighthouse &amp; Security Audit"
+    />
+    <meta
+      property="og:description"
+      content="Audit any website or GitHub repository across Performance, Accessibility (WCAG 2.2 AA/AAA), Best Practices, SEO, and Web Security with instant AI code fixes and Git patches."
+    />
+    <meta property="og:image" content="https://website-performance-checker.netlify.app/assets/brand-key-visual.jpg" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://website-performance-checker.netlify.app/" />
+    <meta
+      name="twitter:title"
+      content="Website Accessibility &amp; Performance Checker — WCAG 2.2, Core Web Vitals &amp; Lighthouse"
+    />
+    <meta
+      name="twitter:description"
+      content="Instant static &amp; Lighthouse JSON audits for Performance, Accessibility, Best Practices, SEO, and Web Security. Generate atomic Git patches in seconds."
+    />
+    <meta name="twitter:image" content="https://website-performance-checker.netlify.app/assets/brand-key-visual.jpg" />
+
+    <!-- Performance Preconnect Hints -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:wght@400;500;600&family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Schema.org Structured Data (WebApplication + SoftwareApplication + WebSite + FAQPage) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://website-performance-checker.netlify.app/#website",
+            "url": "https://website-performance-checker.netlify.app/",
+            "name": "Website Accessibility & Performance Checker — Fresnel",
+            "description": "Comprehensive Website Accessibility & Performance Checker for WCAG 2.2 compliance, Core Web Vitals, Lighthouse JSON analysis, SEO optimization, and web security hardening.",
+            "inLanguage": "en-US"
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://website-performance-checker.netlify.app/#webapp",
+            "name": "Fresnel — Website Accessibility & Performance Checker",
+            "url": "https://website-performance-checker.netlify.app/",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "All",
+            "browserRequirements": "Requires JavaScript",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "featureList": [
+              "Website Accessibility Checker (WCAG 2.1 / 2.2 AA & AAA)",
+              "Website Performance & Core Web Vitals Analyzer (LCP, INP, CLS, FCP, TTFB)",
+              "Lighthouse Result (LHR) JSON Deep Correlator",
+              "AI Smart Code Fixer & Refactor Studio",
+              "Interactive WCAG Color Contrast Studio with 1-Click Auto-Fix",
+              "SEO Meta Tag, OpenGraph & JSON-LD Schema Generator",
+              "Web Application Security & CSP Header Hardening Scanner",
+              "Atomic Git Format-Patch (.patch) & 1-Click Pull Request Generator"
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://website-performance-checker.netlify.app/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "How do I check my website accessibility and performance for free?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Enter any website URL or GitHub repository URL into Fresnel Website Accessibility & Performance Checker and click Start Audit. Fresnel analyzes Performance (Core Web Vitals: LCP, INP, CLS), Accessibility (WCAG 2.2 AA/AAA), Best Practices, SEO, and Web Security, generating ready-to-apply code fixes and Git patches."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does this tool check WCAG 2.1 and WCAG 2.2 AA/AAA compliance?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Fresnel checks skip-to-main-content landmarks, ARIA labels, document route titles, 44x44px touch target sizing, keyboard focus-visible indicators, and includes an interactive live WCAG 2.2 AA/AAA Color Contrast Checker with 1-click contrast auto-fix."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I upload a Google Lighthouse JSON report for deeper code fixes?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. In Run 2 (Lighthouse JSON Audit), you can upload or paste any Lighthouse Result (LHR) .json file to map failing audits, metricSavings, and DOM selectors directly to source code commits."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <app-root></app-root>

@@ -15,7 +15,7 @@ import { AuditService } from '../../services/audit.service';
         [class.brand-hover-target--horizontal]="isHorizontal()"
       >
         <div class="logo-showcase" aria-hidden="true">
-          <!-- Minimalist Fresnel Lighthouse Silhouette (Matches Uploaded Brand Identity Lockups) -->
+          <!-- Fresnel Lighthouse Silhouette -->
           <svg
             class="fresnel-hero-logo"
             viewBox="0 0 100 100"

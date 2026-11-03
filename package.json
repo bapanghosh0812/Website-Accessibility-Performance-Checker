@@ -1,7 +1,12 @@
 {
   "name": "fresnel",
   "version": "1.0.0",
-  "description": "Fresnel — Angular & Node.js Lighthouse Code Audit Web Application powered by Gemini 4 Argon Managed Agent (phantom-gdemo-1)",
+  "description": "Fresnel — Website Accessibility & Performance Checker for static Lighthouse code audits, LHR JSON analysis, and atomic Git patch generation.",
+  "homepage": "https://website-performance-checker.netlify.app/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bapanghosh0812/Website-Accessibility-Performance-Checker.git"
+  },
   "type": "module",
   "private": true,
   "scripts": {
@@ -22,18 +27,17 @@
     "@angular/platform-browser": "^19.2.0",
     "@angular/platform-browser-dynamic": "^19.2.0",
     "@angular/router": "^19.2.0",
-    "@google/genai": "^2.4.0",
     "express": "^4.21.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.8.0",
     "tsx": "^4.21.0",
-    "yaml": "^2.8.2",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.2.0",
     "@angular/cli": "^19.2.0",
     "@angular/compiler-cli": "^19.2.0",
+    "@netlify/angular-runtime": "^4.0.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.0.0",
     "typescript": "~5.7.2"

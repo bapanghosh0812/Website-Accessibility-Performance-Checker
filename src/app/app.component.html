@@ -92,18 +92,13 @@
               Or try demo mode
             </button>
           </div>
-
-          <p class="upload-legal-disclaimer">
-            By using this feature, you confirm that you have the necessary rights to any content that you upload. Do not generate content that infringes on others’ intellectual property or privacy rights. Your use of this generative AI service is subject to our <a href="https://policies.google.com/terms/generative-ai/use-policy" target="_blank" rel="noopener noreferrer">Prohibited Use Policy</a>.<br />
-            Please note that uploads, including those from Google Workspace, may be used to develop and improve Google products and services in accordance with our <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">terms</a>.
-          </p>
         </form>
       </div>
     </section>
   }
 
   <!-- =====================================================================
-       STEP 2 & STEP 6: MANAGED AGENT WORKING (TYPOGRAPHY & NARRATIVE)
+       STEP 2 & STEP 6: CODE AUDIT IN PROGRESS (TYPOGRAPHY & NARRATIVE)
        ===================================================================== -->
   @if ((audit.step() === 2 || audit.step() === 6) && audit.session(); as session) {
     <section
@@ -652,11 +647,6 @@
               Load sample Lighthouse JSON
             </button>
           </div>
-
-          <p class="upload-legal-disclaimer">
-            By using this feature, you confirm that you have the necessary rights to any content that you upload. Do not generate content that infringes on others’ intellectual property or privacy rights. Your use of this generative AI service is subject to our <a href="https://policies.google.com/terms/generative-ai/use-policy" target="_blank" rel="noopener noreferrer">Prohibited Use Policy</a>.<br />
-            Please note that uploads, including those from Google Workspace, may be used to develop and improve Google products and services in accordance with our <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">terms</a>.
-          </p>
 
           @if (audit.lhrFileName()) {
             <div class="lhr-file-pill">Loaded: {{ audit.lhrFileName() }}</div>

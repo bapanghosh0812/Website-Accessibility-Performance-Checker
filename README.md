@@ -1,78 +1,125 @@
-# Fresnel — Focused Code-Only Lighthouse Autofix (Angular + Node.js)
+# Fresnel — Website Accessibility & Performance Checker
 
-> *"By replacing heavy, solid glass with concentric stepped rings, Augustin-Jean Fresnel captured scattered light and concentrated it into a single, razor-sharp beam visible across the horizon."*
+[![Live Demo](https://img.shields.io/badge/Live_Demo-website--performance--checker.netlify.app-0052FF?style=for-the-badge&logo=netlify&logoColor=white)](https://website-performance-checker.netlify.app/)
+[![Angular 19](https://img.shields.io/badge/Angular-19.2-DD0031?style=for-the-badge&logo=angular&logoColor=white)](https://angular.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-**Fresnel** is a minimal, rounded, friendly multi-flow web application built with **Angular 19** (Standalone Components + Signals) and **Node.js** that runs **Gemini 4 Argon** (`gemini-4-argon`) as a **Google Cloud Managed Agent** (`antigravity-preview-09-2026`) on GCP project **`phantom-gdemo-1`**.
+> *"Instead of a single heavy dome of glass, concentric stepped prism rings capture scattered light from every angle and refract it into one extraordinary, miles-long beam."* — **Augustin-Jean Fresnel (1788–1827)**
 
-Like the stepped concentric glass rings of Augustin-Jean Fresnel's lighthouse lens, Fresnel inspects raw repository source code across all four Lighthouse pillars (**Performance**, **Accessibility**, **Best Practices**, and **SEO**) and focuses findings into small, self-contained, atomic Git commits—**strictly through static AST & template analysis without executing servers or builds**.
+**Fresnel** is a full-stack **Website Accessibility & Performance Checker** built with **Angular 19** (Standalone Components + Signals) and **Node.js**. It performs static source-code audits across all four **Lighthouse** pillars (**Performance**, **Accessibility**, **Best Practices**, and **SEO**) along with **Light Web Application Security Findings**, synthesizing actionable, self-contained atomic Git commits, unified diffs, downloadable `git format-patch` bundles, and 1-click terminal Pull Request commands.
 
----
-
-## Key Features
-
-1. **Interactive Fresnel Lore Tooltip (`Why Fresnel?`)**
-   - Hover or focus over the **Fresnel** brand mark or **"Why Fresnel?"** pill on Step 1 to view the historical quote and explanation of Augustin-Jean Fresnel's 1822 stepped lighthouse lens and how it maps to static Lighthouse code autofix.
-2. **Sandbox Demo Mode (`Try Demo Mode`)**
-   - Test and showcase the entire 4-step workflow (`Enter Repo` → `Managed Agent Typography Narrative` → `Audit Report & Commit Selector` → `Pull Request Dispatched`) against a self-contained synthetic workspace (`fresnel-sandbox/lumina-web-app`) without hitting any public GitHub repositories.
-3. **Angular + Node.js Full-Stack Architecture**
-   - **Frontend (`src/`)**: Angular 19 standalone components (`AppComponent`, `FresnelLogoComponent`), reactive Angular `signal()` and `computed()` state management (`AuditService`), and smooth view-to-view opacity + vertical movement transitions (`cubic-bezier(0.22, 1, 0.36, 1)`).
-   - **Backend (`server/`)**: Zero-dependency Node.js HTTP & REST API server (`server/index.js`, `server/agent-client.js`) and Python Vertex AI Managed Agent SDK bridge (`server/argon_managed_agent.py`) targeting GCP project `phantom-gdemo-1`.
-4. **PR Dispatch or Manual Git `.patch` Download**
-   - Review every atomic commit with inline expandable unified diffs, filter by Lighthouse category, and either dispatch a GitHub Pull Request or download a standard `git format-patch` bundle (`fresnel-lighthouse-fixes.patch`) with step-by-step CLI instructions.
+- **Live Demo:** [https://website-performance-checker.netlify.app/](https://website-performance-checker.netlify.app/)
+- **Repository:** [https://github.com/bapanghosh0812/Website-Accessibility-Performance-Checker](https://github.com/bapanghosh0812/Website-Accessibility-Performance-Checker)
 
 ---
 
-## Project Structure (`fresnel/`)
+## Core Features
+
+### 1. Run 1 — Static Repository Code Audit
+Inspect any GitHub repository URL (`https://github.com/owner/repo`) across 5 categories without executing untrusted runtime code:
+- **Performance:** LCP hero resource prioritization (`fetchpriority="high"`), render-blocking stylesheet elimination, CLS explicit image dimension reservation, and `preconnect` / `font-display:swap` optimizations.
+- **Accessibility (WCAG 2.1 AA/AAA):** Keyboard-accessible skip-to-main-content links, route-specific document titles, `44×44px` minimum touch targets, `aria-label` coverage for icon controls, and high-contrast `:focus-visible` outlines.
+- **Best Practices:** Strict `Content-Security-Policy` headers/meta directives, `rel="noopener noreferrer"` external link hardening, and passive scroll/touch listeners (`{ passive: true }`).
+- **SEO:** Responsive viewport metadata, canonical URLs, OpenGraph tags, crawlable semantic anchors, and `schema.org` JSON-LD structured data.
+- **Web Application Security Findings (Light):** Static detection of common unsafe patterns including unescaped DOM XSS sinks (`[innerHTML]` / `bypassSecurityTrustHtml`), exposed client secrets or `localStorage` bearer tokens, and unvalidated open-redirect parameters.
+
+### 2. Run 2 — Lighthouse Report (LHR) `.json` Deep Analysis
+Upload or paste a Lighthouse Result (`.json`) report (or load the built-in sample LHR report) to correlate failing `audits`, `metricSavings` (LCP, FCP, CLS), and DOM selectors directly against repository templates and stylesheets.
+
+### 3. Interactive Diff Inspector, `.patch` Export & 1-Click Terminal PR
+- Expand or collapse syntax-highlighted unified Git diffs for every generated commit.
+- Filter commits by category and select/deselect individual fixes.
+- Download a standards-compliant multi-commit `git format-patch` file (`.patch`) or copy a self-contained `git am --3way` + `gh pr create` terminal command.
+
+### 4. Interactive Sandbox Demo Mode & Theme Support
+- **Demo Mode:** Try the complete multi-step workflow immediately using the built-in `fresnel-sandbox/lumina-web-app` target.
+- **Light & Dark Themes:** Instant theme switching persisted via `localStorage`.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| **Frontend** | Angular 19 (Standalone Components, `signal()`, `computed()`, `linkedSignal()`), TypeScript 5.7, SCSS |
+| **Backend API** | Node.js HTTP REST API (`server/index.js`, `server/agent-client.js`) |
+| **Serverless & Hosting** | Netlify Functions (`netlify/functions/api.mjs`), `@netlify/angular-runtime` (`netlify.toml`) |
+
+---
+
+## Project Structure
 
 ```text
-fresnel/
-├── angular.json                                  # Angular CLI workspace configuration
-├── package.json                                  # Angular + Node.js scripts and dependencies
-├── proxy.conf.json                               # Angular dev-server proxy to Node backend (:4173)
-├── tsconfig.json                                 # TypeScript strict configuration
-├── tsconfig.app.json                             # Angular application TypeScript config
-├── src/                                          # Angular Frontend Source
-│   ├── index.html                                # Root HTML shell with Plus Jakarta Sans & JetBrains Mono
-│   ├── main.ts                                   # Angular bootstrapApplication entry point
-│   ├── styles.scss                               # Minimal, rounded & friendly design system + dark mode
-│   └── app/
-│       ├── app.config.ts                         # Angular ApplicationConfig (HttpClient provider)
-│       ├── app.component.ts                      # Multi-flow 4-step root component
-│       ├── app.component.html                    # Step 1-4 templates with smooth transitions
-│       ├── app.component.scss                    # Component-scoped transitions
-│       ├── models/
-│       │   └── audit.model.ts                    # TypeScript interfaces (AuditJob, AuditCommit, FresnelLore)
-│       ├── services/
-│       │   └── audit.service.ts                  # Signal-based state & Node API integration
-│       └── components/
-│           └── fresnel-logo/
-│               └── fresnel-logo.component.ts     # Lighthouse-Fresnel SVG logo + "Why Fresnel?" tooltip
-├── server/                                       # Node.js Backend & Vertex AI Managed Agent Bridge
-│   ├── index.js                                  # Node HTTP server (serves Angular dist/ or public/ + REST API)
-│   ├── agent-client.js                           # Gemini 4 Argon Managed Agent client (phantom-gdemo-1 + Demo Mode)
-│   └── argon_managed_agent.py                    # Python Vertex AI Managed Agent SDK reference implementation
-└── public/                                       # Pre-built browser bundle for instant zero-install execution
-    ├── logo.svg
-    ├── index.html
-    ├── styles.css
-    └── app.js
+Website-Accessibility-Performance-Checker/
+├── angular.json                         # Angular CLI build & serve configuration
+├── netlify.toml                         # Netlify build, @netlify/angular-runtime plugin & redirects
+├── package.json                         # Scripts and dependencies
+├── proxy.conf.json                      # Local Angular dev-server proxy (/api -> :3000)
+├── server.ts                            # Node.js full-stack server entrypoint
+├── netlify/
+│   └── functions/
+│       └── api.mjs                      # Serverless Netlify Function handler for /api/* routes
+├── scripts/
+│   └── build.mjs                        # Cross-platform Angular production build runner
+├── server/
+│   ├── index.js                         # REST API routes & static asset server
+│   ├── agent-client.js                  # Static audit engine, LHR JSON analyzer & Git patch builder
+│   └── github-client.js                 # GitHub helper utilities
+└── src/
+    ├── index.html                       # Root HTML shell
+    ├── main.ts                          # Angular bootstrapApplication entrypoint
+    ├── styles.scss                      # Design system, responsive layout & light/dark theme tokens
+    └── app/
+        ├── app.config.ts                # Angular ApplicationConfig (HttpClient provider)
+        ├── app.component.ts             # Multi-step audit workflow controller
+        ├── app.component.html           # Step 1–7 accessible templates
+        ├── app.component.scss           # Component styles
+        ├── components/
+        │   └── fresnel-logo/            # Fresnel SVG emblem & historical lens tooltip
+        ├── models/
+        │   └── audit.model.ts           # TypeScript interfaces for sessions, commits & patches
+        └── services/
+            └── audit.service.ts         # Reactive signal state & REST API integration
 ```
 
 ---
 
-## Quick Start
+## Getting Started Locally
 
-### Run the Node.js Server Immediately
-```bash
-cd fresnel
-PORT=4173 npm start
-```
-Then open `http://localhost:4173` in your browser.
+### Prerequisites
+- **Node.js** `>= 20.0.0`
+- **npm** `>= 10.0.0`
 
-### Full Angular CLI Development Workflow
+### 1. Clone the repository & install dependencies
 ```bash
-cd fresnel
+git clone https://github.com/bapanghosh0812/Website-Accessibility-Performance-Checker.git
+cd Website-Accessibility-Performance-Checker
 npm install
-npm run start:fullstack
 ```
-- `npm run build` compiles the Angular frontend (`src/`) into `dist/fresnel/browser`, which the Node.js server (`server/index.js`) automatically detects and serves.
+
+### 2. Build the production bundle
+```bash
+npm run build
+```
+This compiles the Angular application into `dist/fresnel/browser`.
+
+### 3. Start the full-stack server
+```bash
+npm run dev
+```
+Open `http://localhost:3000` in your browser.
+
+---
+
+## Deployment on Netlify
+
+This repository is pre-configured for zero-config continuous deployment on Netlify via `netlify.toml`:
+
+- **Build command:** `npm run build`
+- **Publish directory:** `dist/fresnel/browser`
+- **Functions directory:** `netlify/functions`
+- **Plugin:** `@netlify/angular-runtime`
+- **Live URL:** [https://website-performance-checker.netlify.app/](https://website-performance-checker.netlify.app/)
+
+Every `git push` to the `main` branch on GitHub automatically triggers a production build and deploy on Netlify.

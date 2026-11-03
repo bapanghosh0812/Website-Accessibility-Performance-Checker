@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
 import {
-  API_BASE_URL,
   FRESNEL_AGENT_CONFIG,
   FRESNEL_IDENTITY_LORE,
   SAMPLE_LIGHTHOUSE_LHR_JSON,
@@ -15,10 +14,7 @@ import {
   buildCategoriesImproved,
   generateGitFormatPatch,
   buildPullRequestCliBundle,
-  analyzeLighthouseReportJson,
-  resolveGeminiApiKey,
-  loadAgentFiles,
-  startCloudManagedAgentAudit
+  analyzeLighthouseReportJson
 } from './agent-client.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,13 +37,8 @@ function resolveAngularDistDir() {
 
 let angularBuildPromise = null;
 
-function cleanupLegacyVanillaFiles() {
-  // No-op: preserve workspace files across shared instances
-}
-
 function isAngularDistFresh() {
   try {
-    // In a shared/deployed app.tar.gz container, /app/applet/browser/index.html is prebuilt
     const sharedIndex = path.join(ROOT_DIR, 'browser', 'index.html');
     if (fs.existsSync(sharedIndex) && !fs.existsSync(SRC_APP_DIR)) {
       return true;
@@ -81,15 +72,12 @@ function ensureAngularBuild() {
     return angularBuildPromise;
   }
   const buildScript = path.join(ROOT_DIR, 'scripts', 'build.mjs');
-  const ngBin = path.join(ROOT_DIR, 'node_modules', '.bin', 'ng');
-  if (!fs.existsSync(buildScript) && !fs.existsSync(ngBin)) {
+  if (!fs.existsSync(buildScript)) {
     return Promise.resolve(fs.existsSync(path.join(resolveAngularDistDir(), 'index.html')));
   }
 
   angularBuildPromise = new Promise((resolve) => {
-    const cmd = fs.existsSync(buildScript) ? process.execPath : ngBin;
-    const cmdArgs = fs.existsSync(buildScript) ? [buildScript] : ['build'];
-    const child = spawn(cmd, cmdArgs, {
+    const child = spawn(process.execPath, [buildScript], {
       cwd: ROOT_DIR,
       stdio: 'ignore',
       detached: false
@@ -133,16 +121,8 @@ export function resolvePortAndHost() {
     return { port: cliPort, host };
   }
 
-  // When running behind AI Studio's container Nginx (where NGINX_PORT=8080 and DEFAULT_APP_PORT=3000),
-  // bind to DEFAULT_APP_PORT (3000) so Nginx can proxy requests and EADDRINUSE on 8080 is avoided.
-  const defaultAppPort = Number(process.env.DEFAULT_APP_PORT);
-  if (!Number.isNaN(defaultAppPort) && defaultAppPort > 0) {
-    return { port: defaultAppPort, host };
-  }
-
   const envPort = Number(process.env.PORT);
-  const nginxPort = Number(process.env.NGINX_PORT);
-  if (!Number.isNaN(envPort) && envPort > 0 && envPort !== nginxPort) {
+  if (!Number.isNaN(envPort) && envPort > 0) {
     return { port: envPort, host };
   }
 
@@ -151,8 +131,103 @@ export function resolvePortAndHost() {
 
 const { port: PORT, host: HOST } = resolvePortAndHost();
 
-/** In-memory store of Managed Agent audit sessions */
+/** In-memory store of active audit sessions */
 const auditSessions = new Map();
+
+function createEncodedSessionId(runPhase, mode, startedAt, repoFullName) {
+  const safePhase = runPhase === 'lhr' ? 'lhr' : 'static';
+  const safeMode = mode === 'demo' ? 'demo' : 'live';
+  const encodedRepo = Buffer.from(
+    repoFullName || 'fresnel-sandbox/lumina-web-app',
+    'utf-8'
+  ).toString('base64url');
+  const rand = crypto.randomBytes(4).toString('hex');
+  return `fresnel.${safePhase}.${safeMode}.${startedAt.toString(36)}.${encodedRepo}.${rand}`;
+}
+
+function getOrReconstructSession(sessionId) {
+  if (!sessionId) return null;
+  const existing = auditSessions.get(sessionId);
+  if (existing) return existing;
+
+  // Reconstruct session deterministically on stateless serverless instances (e.g. Netlify Functions)
+  const parts = String(sessionId).split('.');
+  let runPhase = 'static';
+  let mode = 'live';
+  let startedAt = Date.now() - 7000;
+  let repoFullName = 'fresnel-sandbox/lumina-web-app';
+
+  if (parts.length >= 5 && parts[0] === 'fresnel') {
+    runPhase = parts[1] === 'lhr' ? 'lhr' : 'static';
+    mode = parts[2] === 'demo' ? 'demo' : 'live';
+    const parsedTime = parseInt(parts[3], 36);
+    if (!Number.isNaN(parsedTime) && parsedTime > 0) {
+      startedAt = parsedTime;
+    }
+    try {
+      const decoded = Buffer.from(parts[4], 'base64url').toString('utf-8');
+      if (decoded && decoded.includes('/')) {
+        repoFullName = decoded;
+      }
+    } catch {
+      // keep default repoFullName
+    }
+  } else if (String(sessionId).startsWith('fresnel-lhr-')) {
+    runPhase = 'lhr';
+  }
+
+  const repoMeta = parseRepoUrl(repoFullName, mode);
+  const interactionId = `audit/${crypto.createHash('sha1').update(String(sessionId)).digest('hex').slice(0, 16)}`;
+
+  if (runPhase === 'lhr') {
+    const lhrResult = analyzeLighthouseReportJson(repoMeta, SAMPLE_LIGHTHOUSE_LHR_JSON);
+    const lhrSession = {
+      id: sessionId,
+      interactionId,
+      mode,
+      runPhase: 'lhr',
+      lhrMeta: {
+        lighthouseVersion: lhrResult.lhrVersion,
+        requestedUrl: lhrResult.requestedUrl,
+        fetchTime: lhrResult.fetchTime
+      },
+      repo: repoMeta,
+      branch: 'main',
+      categories: ['performance', 'accessibility', 'best-practices', 'seo'],
+      commits: lhrResult.commits,
+      steps: lhrResult.steps,
+      startedAt,
+      totalDurationMs: 6400,
+      fastForwarded: false,
+      pr: null
+    };
+    auditSessions.set(sessionId, lhrSession);
+    return lhrSession;
+  }
+
+  const categories = ['performance', 'accessibility', 'best-practices', 'seo', 'security'];
+  const commits = buildComprehensiveCommits(repoMeta, categories);
+  const steps = buildAgentTelemetrySteps(repoMeta, commits);
+
+  const session = {
+    id: sessionId,
+    interactionId,
+    mode,
+    runPhase: 'static',
+    lhrMeta: null,
+    repo: repoMeta,
+    branch: 'main',
+    categories,
+    commits,
+    steps,
+    startedAt,
+    totalDurationMs: 6800,
+    fastForwarded: false,
+    pr: null
+  };
+  auditSessions.set(sessionId, session);
+  return session;
+}
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -207,53 +282,29 @@ function readJsonBody(req) {
 }
 
 function computeSessionState(session) {
-  const isCloudLive =
-    session.mode === 'live' &&
-    session.cloudManagedAgent &&
-    (session.cloudManagedAgent.active || session.cloudManagedAgent.completed);
+  const now = Date.now();
+  const elapsedMs = session.fastForwarded
+    ? session.totalDurationMs
+    : Math.max(0, now - session.startedAt);
+  const ratio = Math.min(1, elapsedMs / session.totalDurationMs);
+  const totalSteps = session.steps.length;
+  const visibleStepCount =
+    ratio >= 1
+      ? totalSteps
+      : Math.max(1, Math.min(totalSteps - 1, Math.floor(ratio * totalSteps) + 1));
 
-  let status = 'in_progress';
-  let progressPercent = 12;
-  let visibleSteps = session.steps;
-  let visibleCommits = session.commits;
+  const visibleSteps = session.steps.slice(0, visibleStepCount);
+  const discoveredCommitIds = new Set(
+    visibleSteps.filter((s) => s.commitId).map((s) => s.commitId)
+  );
 
-  if (session.fastForwarded || (isCloudLive && session.cloudManagedAgent.completed)) {
-    status = 'completed';
-    progressPercent = 100;
-    visibleSteps = session.steps;
-    visibleCommits = session.commits;
-  } else if (isCloudLive && session.cloudManagedAgent.active) {
-    status = 'in_progress';
-    const elapsedSec = Math.max(1, (Date.now() - session.startedAt) / 1000);
-    progressPercent = Math.min(94, Math.max(14, Math.round(session.steps.length * 14 + elapsedSec * 3)));
-    visibleSteps = session.steps;
-    visibleCommits = session.commits;
-  } else {
-    const now = Date.now();
-    const elapsedMs = session.fastForwarded
-      ? session.totalDurationMs
-      : Math.max(0, now - session.startedAt);
-    const ratio = Math.min(1, elapsedMs / session.totalDurationMs);
-    const totalSteps = session.steps.length;
-    const visibleStepCount =
-      ratio >= 1
-        ? totalSteps
-        : Math.max(1, Math.min(totalSteps - 1, Math.floor(ratio * totalSteps) + 1));
+  const visibleCommits =
+    ratio >= 1
+      ? session.commits
+      : session.commits.filter((c) => discoveredCommitIds.has(c.id));
 
-    visibleSteps = session.steps.slice(0, visibleStepCount);
-    const discoveredCommitIds = new Set(
-      visibleSteps.filter((s) => s.commitId).map((s) => s.commitId)
-    );
-
-    visibleCommits =
-      ratio >= 1
-        ? session.commits
-        : session.commits.filter((c) => discoveredCommitIds.has(c.id));
-
-    status = ratio >= 1 ? 'completed' : 'in_progress';
-    progressPercent = Math.round(ratio * 100);
-  }
-
+  const status = ratio >= 1 ? 'completed' : 'in_progress';
+  const progressPercent = Math.round(ratio * 100);
   const currentStep = visibleSteps[visibleSteps.length - 1] || session.steps[0];
 
   const trackedCategories =
@@ -280,7 +331,6 @@ function computeSessionState(session) {
   return {
     id: session.id,
     interactionId: session.interactionId,
-    environmentId: session.environmentId || null,
     mode: session.mode,
     runPhase: session.runPhase || 'static',
     categoriesImproved,
@@ -290,17 +340,6 @@ function computeSessionState(session) {
     repo: session.repo,
     branch: session.branch,
     categories: session.categories,
-    agentConfig: {
-      gcpProject: FRESNEL_AGENT_CONFIG.gcpProject,
-      gcpProjectNumber: FRESNEL_AGENT_CONFIG.gcpProjectNumber,
-      gcpLocation: FRESNEL_AGENT_CONFIG.gcpLocation,
-      agentHarness:
-        session.cloudManagedAgent?.agentHarness || FRESNEL_AGENT_CONFIG.agentHarness,
-      model: FRESNEL_AGENT_CONFIG.model,
-      fallbackModel: FRESNEL_AGENT_CONFIG.fallbackModel,
-      executionPolicy: FRESNEL_AGENT_CONFIG.executionPolicy
-    },
-    cloudManagedAgent: session.cloudManagedAgent || null,
     currentStep,
     steps: visibleSteps,
     totalSteps: session.steps.length,
@@ -312,104 +351,24 @@ function computeSessionState(session) {
 }
 
 /**
- * Handles all Fresnel API routes and static file fallback.
- * Returns true if the request was handled, or false if caller (e.g. Vite middleware) should handle it.
+ * Handles all Fresnel API routes.
  */
 export async function handleFresnelApiRequest(req, res) {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
-
-  // 0. Server-Side Managed Agent Proxy (/api/gemini/v1beta/*)
-  if (pathname.startsWith('/api/gemini/v1beta/')) {
-    const apiKey = resolveGeminiApiKey();
-    if (!apiKey) {
-      sendJson(res, 401, {
-        error: {
-          code: 'missing_api_key',
-          message:
-            'Missing valid GEMINI_API_KEY. Add GEMINI_API_KEY in AI Studio Settings → Secrets (GCP project: phantom-gdemo-1).'
-        }
-      });
-      return true;
-    }
-
-    const upstreamSubpath = pathname.replace(/^\/api\/gemini\/v1beta\//, '');
-    const upstreamUrl = `${API_BASE_URL}/${upstreamSubpath}${url.search}`;
-
-    let forwardBody = undefined;
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      const bodyObj = await readJsonBody(req);
-      // Strip agent_config when calling custom agents so upstream does not return 400
-      if (
-        bodyObj &&
-        typeof bodyObj === 'object' &&
-        typeof bodyObj.agent === 'string' &&
-        !bodyObj.agent.startsWith('antigravity-') &&
-        bodyObj.agent_config
-      ) {
-        delete bodyObj.agent_config;
-      }
-      forwardBody = JSON.stringify(bodyObj);
-    }
-
-    const upstreamRes = await fetch(upstreamUrl, {
-      method: req.method,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
-      body: forwardBody
-    });
-
-    const contentType = upstreamRes.headers.get('content-type') || 'application/json';
-    res.writeHead(upstreamRes.status, {
-      'Content-Type': contentType,
-      'Cache-Control': 'no-store'
-    });
-
-    if (upstreamRes.body) {
-      const reader = upstreamRes.body.getReader();
-      try {
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          res.write(Buffer.from(value));
-        }
-      } finally {
-        reader.releaseLock();
-      }
-    }
-    res.end();
-    return true;
-  }
-
-  // 0b. GET /api/agent/info (AI Studio Managed Agent metadata & sources)
-  if (req.method === 'GET' && pathname === '/api/agent/info') {
-    const agentFiles = loadAgentFiles();
-    const sourcesCount = Array.isArray(agentFiles)
-      ? agentFiles.length
-      : agentFiles?.sources?.length || 0;
-    sendJson(res, 200, {
-      agent: FRESNEL_AGENT_CONFIG,
-      hasApiKey: Boolean(resolveGeminiApiKey()),
-      sourcesCount
-    });
-    return true;
-  }
 
   // 1. GET /api/config
   if (req.method === 'GET' && pathname === '/api/config') {
     sendJson(res, 200, {
       brand: 'Fresnel',
       lore: FRESNEL_IDENTITY_LORE,
-      agentConfig: FRESNEL_AGENT_CONFIG,
-      hasCloudApiKey: Boolean(resolveGeminiApiKey()),
+      config: FRESNEL_AGENT_CONFIG,
       sampleLhrJson: SAMPLE_LIGHTHOUSE_LHR_JSON
     });
     return true;
   }
 
-  // 2. POST /api/audit/start (Run 1: Static Code Audit + Light Web Application Security Findings — No Lighthouse Scores)
+  // 2. POST /api/audit/start (Run 1: Static Code Audit + Light Web Application Security Findings)
   if (req.method === 'POST' && pathname === '/api/audit/start') {
     const body = await readJsonBody(req);
     const mode = body.mode === 'demo' ? 'demo' : 'live';
@@ -423,17 +382,16 @@ export async function handleFresnelApiRequest(req, res) {
         ? body.categories
         : ['performance', 'accessibility', 'best-practices', 'seo', 'security'];
 
-    const sessionId = `fresnel-${crypto.randomBytes(5).toString('hex')}`;
-    const interactionId = `interactions/${crypto.randomBytes(8).toString('hex')}`;
+    const startedAt = Date.now();
+    const sessionId = createEncodedSessionId('static', mode, startedAt, repoMeta.fullName);
+    const interactionId = `audit/${crypto.randomBytes(8).toString('hex')}`;
 
-    const commits = mode === 'demo' ? buildComprehensiveCommits(repoMeta, categories) : [];
-    const steps = mode === 'demo' ? buildAgentTelemetrySteps(repoMeta, commits) : [];
+    const commits = buildComprehensiveCommits(repoMeta, categories);
+    const steps = buildAgentTelemetrySteps(repoMeta, commits);
 
     const session = {
       id: sessionId,
       interactionId,
-      environmentId: null,
-      previousInteractionId: null,
       mode,
       runPhase: 'static',
       lhrMeta: null,
@@ -442,7 +400,7 @@ export async function handleFresnelApiRequest(req, res) {
       categories,
       commits,
       steps,
-      startedAt: Date.now(),
+      startedAt,
       totalDurationMs: Number(body.durationMs) || 6800,
       fastForwarded: false,
       pr: null
@@ -450,19 +408,14 @@ export async function handleFresnelApiRequest(req, res) {
 
     auditSessions.set(sessionId, session);
 
-    // When mode === 'live', trigger the real Cloud Managed Agent in GCP (phantom-gdemo-1)
-    if (mode === 'live') {
-      void startCloudManagedAgentAudit(session);
-    }
-
     sendJson(res, 201, computeSessionState(session));
     return true;
   }
 
-  // 3. POST /api/audit/:id/lhr-start (Run 2: Lighthouse Report JSON Deep Analysis — excludes Web Application security findings)
+  // 3. POST /api/audit/:id/lhr-start (Run 2: Lighthouse Report JSON Deep Analysis)
   const lhrStartMatch = pathname.match(/^\/api\/audit\/([^/]+)\/lhr-start$/);
   if (req.method === 'POST' && lhrStartMatch) {
-    const baseSession = auditSessions.get(lhrStartMatch[1]);
+    const baseSession = getOrReconstructSession(lhrStartMatch[1]);
     const body = await readJsonBody(req);
     const mode = baseSession ? baseSession.mode : body.mode === 'live' ? 'live' : 'demo';
     const repoMeta = baseSession
@@ -470,14 +423,13 @@ export async function handleFresnelApiRequest(req, res) {
       : parseRepoUrl(body.repoUrl || FRESNEL_AGENT_CONFIG.demoRepositoryUrl, mode);
 
     const lhrResult = analyzeLighthouseReportJson(repoMeta, body.lhrJson);
-    const lhrSessionId = `fresnel-lhr-${crypto.randomBytes(5).toString('hex')}`;
-    const interactionId = `interactions/${crypto.randomBytes(8).toString('hex')}`;
+    const startedAt = Date.now();
+    const lhrSessionId = createEncodedSessionId('lhr', mode, startedAt, repoMeta.fullName);
+    const interactionId = `audit/${crypto.randomBytes(8).toString('hex')}`;
 
     const lhrSession = {
       id: lhrSessionId,
       interactionId,
-      environmentId: baseSession?.environmentId || null,
-      previousInteractionId: baseSession?.interactionId || null,
       mode,
       runPhase: 'lhr',
       lhrMeta: {
@@ -488,24 +440,15 @@ export async function handleFresnelApiRequest(req, res) {
       repo: repoMeta,
       branch: baseSession ? baseSession.branch : 'main',
       categories: ['performance', 'accessibility', 'best-practices', 'seo'],
-      commits: mode === 'demo' ? lhrResult.commits : [],
-      steps: mode === 'demo' ? lhrResult.steps : [],
-      startedAt: Date.now(),
+      commits: lhrResult.commits,
+      steps: lhrResult.steps,
+      startedAt,
       totalDurationMs: Number(body.durationMs) || 6400,
       fastForwarded: false,
       pr: null
     };
 
     auditSessions.set(lhrSessionId, lhrSession);
-
-    if (mode === 'live') {
-      void startCloudManagedAgentAudit(lhrSession, {
-        lhrSummary: {
-          lighthouseVersion: lhrResult.lhrVersion,
-          categoriesImproved: lhrResult.categoriesImproved
-        }
-      });
-    }
 
     sendJson(res, 201, computeSessionState(lhrSession));
     return true;
@@ -514,7 +457,7 @@ export async function handleFresnelApiRequest(req, res) {
   // 4. GET /api/audit/:id/status
   const statusMatch = pathname.match(/^\/api\/audit\/([^/]+)\/status$/);
   if (req.method === 'GET' && statusMatch) {
-    const session = auditSessions.get(statusMatch[1]);
+    const session = getOrReconstructSession(statusMatch[1]);
     if (!session) {
       sendJson(res, 404, { error: 'Audit session not found' });
       return true;
@@ -526,23 +469,12 @@ export async function handleFresnelApiRequest(req, res) {
   // 5. POST /api/audit/:id/fast-forward
   const ffMatch = pathname.match(/^\/api\/audit\/([^/]+)\/fast-forward$/);
   if (req.method === 'POST' && ffMatch) {
-    const session = auditSessions.get(ffMatch[1]);
+    const session = getOrReconstructSession(ffMatch[1]);
     if (!session) {
       sendJson(res, 404, { error: 'Audit session not found' });
       return true;
     }
     session.fastForwarded = true;
-    if (session.abortController) {
-      try {
-        session.abortController.abort();
-      } catch {
-        // ignore abort errors
-      }
-    }
-    if (session.cloudManagedAgent) {
-      session.cloudManagedAgent.active = false;
-      session.cloudManagedAgent.completed = true;
-    }
     if (session.steps.length < 4 && session.runPhase !== 'lhr') {
       session.steps = buildAgentTelemetrySteps(session.repo, session.commits);
     }
@@ -553,7 +485,7 @@ export async function handleFresnelApiRequest(req, res) {
   // 6. GET /api/audit/:id/patch.diff (Direct Attachment Download)
   const patchGetMatch = pathname.match(/^\/api\/audit\/([^/]+)\/patch\.diff$/);
   if (req.method === 'GET' && patchGetMatch) {
-    const session = auditSessions.get(patchGetMatch[1]);
+    const session = getOrReconstructSession(patchGetMatch[1]);
     if (!session) {
       res.writeHead(404);
       res.end('Audit session not found');
@@ -579,7 +511,7 @@ export async function handleFresnelApiRequest(req, res) {
   // 7. POST /api/audit/:id/patch
   const patchMatch = pathname.match(/^\/api\/audit\/([^/]+)\/patch$/);
   if (req.method === 'POST' && patchMatch) {
-    const session = auditSessions.get(patchMatch[1]);
+    const session = getOrReconstructSession(patchMatch[1]);
     if (!session) {
       sendJson(res, 404, { error: 'Audit session not found' });
       return true;
@@ -610,7 +542,7 @@ export async function handleFresnelApiRequest(req, res) {
   // 8. POST /api/audit/:id/pr (Zero-Env-Var 1-Click Terminal Command: git am + gh pr create)
   const prMatch = pathname.match(/^\/api\/audit\/([^/]+)\/pr$/);
   if (req.method === 'POST' && prMatch) {
-    const session = auditSessions.get(prMatch[1]);
+    const session = getOrReconstructSession(prMatch[1]);
     if (!session) {
       sendJson(res, 404, { error: 'Audit session not found' });
       return true;
@@ -657,7 +589,6 @@ export async function handleFresnelRequest(req, res) {
       return;
     }
 
-    // Fallback to public/logo.svg if requested directly before asset copy
     if (safePath === '/logo.svg') {
       const publicLogo = path.join(PUBLIC_DIR, 'logo.svg');
       if (fs.existsSync(publicLogo) && fs.statSync(publicLogo).isFile()) {
@@ -667,7 +598,6 @@ export async function handleFresnelRequest(req, res) {
       }
     }
 
-    // Do NOT return index.html (text/html) for missing static assets (.css, .js, .mjs, .svg, etc.)
     const requestedExt = path.extname(safePath).toLowerCase();
     if (requestedExt && requestedExt !== '.html') {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -675,7 +605,6 @@ export async function handleFresnelRequest(req, res) {
       return;
     }
 
-    // Fallback to Angular index.html for extensionless SPA routes
     const indexFallback = path.join(staticRoot, 'index.html');
     if (fs.existsSync(indexFallback)) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -691,27 +620,14 @@ export async function handleFresnelRequest(req, res) {
 }
 
 export function startFresnelServer(port = PORT, host = HOST) {
-  cleanupLegacyVanillaFiles();
   void ensureAngularBuild();
   const server = http.createServer(handleFresnelRequest);
   server.listen(port, host, () => {
-    console.log(`[Fresnel] Managed Agent Server (phantom-gdemo-1) listening at http://${host}:${port}`);
+    console.log(`[Fresnel] Server listening at http://${host}:${port}`);
   });
-
-  // Also bind to process.env.PORT (e.g. 8080) if running in a direct Cloud Run container without Nginx
-  const envPort = Number(process.env.PORT);
-  if (!Number.isNaN(envPort) && envPort > 0 && envPort !== port) {
-    const directServer = http.createServer(handleFresnelRequest);
-    directServer.on('error', () => {
-      // Ignore EADDRINUSE when Nginx already owns port 8080 and proxies to 3000
-    });
-    directServer.listen(envPort, host);
-  }
-
   return server;
 }
 
-// Start automatically when executed directly
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
   startFresnelServer(PORT, HOST);
 }

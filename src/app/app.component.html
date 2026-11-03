@@ -1,0 +1,687 @@
+<a class="skip-link" href="#app-stage">Skip to main content</a>
+
+<!-- Minimal Top Navigation Bar -->
+<header class="topbar" role="banner">
+  <div class="topbar__left">
+    @if (audit.step() > 1) {
+      <button
+        type="button"
+        class="icon-pill-btn"
+        aria-label="Go to previous step"
+        (click)="onBack()"
+      >
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M12.5 4.5L7 10l5.5 5.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    }
+  </div>
+
+  <div class="topbar__center" aria-live="polite">
+    <span class="step-counter">
+      @if (audit.step() <= 4) {
+        Run 1 · Step {{ audit.step() }} / 4
+      } @else {
+        Run 2 (Lighthouse JSON) · Step {{ audit.step() - 4 }} / 3
+      }
+    </span>
+  </div>
+
+  <div class="topbar__right">
+    <button
+      type="button"
+      class="icon-pill-btn"
+      aria-label="Toggle light and dark theme"
+      title="Toggle light or dark mode"
+      (click)="audit.toggleTheme()"
+    >
+      <svg class="icon-moon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <path d="M17.2 11.8A7.5 7.5 0 1 1 8.2 2.8a5.8 5.8 0 0 0 9 9z" stroke-linejoin="round" />
+      </svg>
+      <svg class="icon-sun" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <circle cx="10" cy="10" r="3.8" />
+        <path d="M10 2v2M10 16v2M3.6 3.6l1.4 1.4M15 15l1.4 1.4M2 10h2M16 10h2M3.6 16.4L5 15M15 5l1.4-1.4" stroke-linecap="round" />
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main id="app-stage" class="stage" tabindex="-1">
+  <!-- =====================================================================
+       STEP 1: SIMPLY THE LOGO + GIT REPO FIELD + BUTTON
+       ===================================================================== -->
+  @if (audit.step() === 1) {
+    <section
+      class="flow-view is-active"
+      [class.is-exiting]="audit.isTransitioning()"
+      aria-label="Enter GitHub repository"
+    >
+      <div class="intro-shell">
+        <app-fresnel-logo />
+
+        <form class="minimal-repo-form" (ngSubmit)="onStartLiveAudit()" novalidate>
+          <label for="repo-url-input" class="sr-only">GitHub repository URL</label>
+          <div class="input-pill-shell">
+            <input
+              id="repo-url-input"
+              name="repoUrl"
+              type="url"
+              class="repo-field"
+              placeholder="https://github.com/owner/repository"
+              [ngModel]="repoUrl()"
+              (ngModelChange)="repoUrl.set($event)"
+              autocomplete="off"
+              spellcheck="false"
+              required
+            />
+          </div>
+
+          <button type="submit" class="primary-flow-btn">
+            <span>Start audit</span>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M4.5 10h11M10.5 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+
+          <div class="demo-mode-strip">
+            <button
+              type="button"
+              class="quiet-demo-link"
+              (click)="onStartDemoAudit()"
+            >
+              Or try demo mode
+            </button>
+          </div>
+
+          <p class="upload-legal-disclaimer">
+            By using this feature, you confirm that you have the necessary rights to any content that you upload. Do not generate content that infringes on others’ intellectual property or privacy rights. Your use of this generative AI service is subject to our <a href="https://policies.google.com/terms/generative-ai/use-policy" target="_blank" rel="noopener noreferrer">Prohibited Use Policy</a>.<br />
+            Please note that uploads, including those from Google Workspace, may be used to develop and improve Google products and services in accordance with our <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">terms</a>.
+          </p>
+        </form>
+      </div>
+    </section>
+  }
+
+  <!-- =====================================================================
+       STEP 2 & STEP 6: MANAGED AGENT WORKING (TYPOGRAPHY & NARRATIVE)
+       ===================================================================== -->
+  @if ((audit.step() === 2 || audit.step() === 6) && audit.session(); as session) {
+    <section
+      class="flow-view is-active"
+      [class.is-exiting]="audit.isTransitioning()"
+      aria-labelledby="process-live-headline"
+    >
+      <div class="narrative-shell">
+        <div class="narrative-meta">
+          <span class="breathing-dot" aria-hidden="true"></span>
+          <span>{{ plainText(session.currentStep.phase) }}</span>
+          <span class="narrative-sep">·</span>
+          <span class="narrative-repo">{{ session.repo.fullName }}</span>
+        </div>
+
+        <div class="narrative-hero">
+          <h1 id="process-live-headline" class="narrative-headline" aria-live="polite">
+            {{ imperativeHeadline(session.currentStep.headline) }}
+          </h1>
+          <p class="narrative-body">
+            {{ detailTense(session.currentStep.narrative, session.status === 'completed' ? 'done' : 'active', 240) }}
+          </p>
+        </div>
+
+        <div class="narrative-progress">
+          <div
+            class="narrative-progress__track narrative-progress__track--indeterminate"
+            role="progressbar"
+            aria-label="Code audit in progress"
+          >
+            <div class="narrative-progress__fill"></div>
+          </div>
+          <div class="narrative-progress__meta">
+            <span>
+              {{
+                session.runPhase === 'lhr'
+                  ? 'Analyzing Lighthouse report for ' + session.repo.fullName
+                  : 'Inspecting ' + session.repo.fullName
+              }}
+            </span>
+            @if (session.mode === 'demo' || audit.mode() === 'demo') {
+              <button type="button" class="text-action-btn" (click)="audit.skipToReport()">
+                Skip to report →
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="narrative-journal" aria-label="Completed inspection notes">
+          <ol class="journal-list">
+            @for (item of session.steps.slice().reverse(); track item.index) {
+              <li class="journal-item">
+                <span class="journal-item__cat">{{ plainText(item.category) }}</span>
+                <div>
+                  <h3 class="journal-item__title">{{ imperativeHeadline(item.headline) }}</h3>
+                  <p class="journal-item__desc">{{ detailTense(item.narrative, 'done', 240) }}</p>
+                </div>
+              </li>
+            }
+          </ol>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- =====================================================================
+       STEP 3 (RUN 1) & STEP 7 (RUN 2: CATEGORIES IMPROVED WITH CODE)
+       ===================================================================== -->
+  @if ((audit.step() === 3 || audit.step() === 7) && audit.session(); as session) {
+    <section
+      class="flow-view is-active"
+      [class.is-exiting]="audit.isTransitioning()"
+      aria-labelledby="report-heading"
+    >
+      <div class="report-shell">
+        <header class="report-header">
+          <div class="report-header__top">
+            <span class="soft-pill">{{ session.repo.fullName }}</span>
+          </div>
+
+          <h1 id="report-heading" class="report-title">
+            {{ session.runPhase === 'lhr' ? 'Lighthouse JSON audit report' : 'Code audit report' }}
+          </h1>
+          <p class="report-subtitle">
+            @if (session.runPhase === 'lhr') {
+              Targeted code commits mapped directly to failing audits and DOM selectors in your Lighthouse Result (LHR) JSON report.
+            } @else {
+              Select the static code commits you would like to include in a pull request, download as a patch, or continue to a second run with a Lighthouse JSON report.
+            }
+          </p>
+
+          <!-- CATEGORIES IMPROVED WITH CODE (NO NUMERIC SCORES) -->
+          @if (categoriesImprovedList().length > 0) {
+            <div class="categories-improved-strip" aria-label="Categories improved with code">
+              <div class="categories-improved-strip__head">
+                <span class="categories-improved-strip__title">Categories improved with code</span>
+                <span class="categories-improved-strip__note">Static code audit · verified by commit coverage</span>
+              </div>
+              <div class="categories-improved-grid">
+                @for (item of categoriesImprovedList(); track item.id) {
+                  <div class="category-improved-card">
+                    <div class="category-improved-card__top">
+                      <span class="category-improved-card__check" aria-hidden="true">✓</span>
+                      <span class="category-improved-card__name">{{ item.label }}</span>
+                    </div>
+                    <span class="category-improved-card__meta">
+                      Improved with code · {{ item.commitsCount }} {{ item.commitsCount === 1 ? 'commit' : 'commits' }}
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="report-controls">
+            <div class="category-pills" role="tablist" aria-label="Filter by audit category">
+              @for (cat of visibleCategories(); track cat.key) {
+                <button
+                  type="button"
+                  class="cat-pill"
+                  [class.is-active]="audit.categoryFilter() === cat.key"
+                  role="tab"
+                  [attr.aria-selected]="audit.categoryFilter() === cat.key"
+                  (click)="audit.categoryFilter.set(cat.key)"
+                >
+                  {{ cat.label }}
+                  @if (cat.contextBadge) {
+                    <span class="cat-pill__context">{{ cat.contextBadge }}</span>
+                  }
+                  <span>{{ audit.categoryCounts()[cat.key] }}</span>
+                </button>
+              }
+            </div>
+
+            <div class="bulk-select-links">
+              <button type="button" class="text-action-btn" (click)="audit.selectAllCommits()">
+                Select all
+              </button>
+              <span class="narrative-sep">·</span>
+              <button type="button" class="text-action-btn" (click)="audit.clearAllCommits()">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          @if (session.runPhase === 'static' && audit.categoryFilter() === 'security') {
+            <div class="security-context-note" role="note">
+              <div class="security-context-note__head">
+                <span class="security-light-badge">Light</span>
+                <strong>Web application security findings</strong>
+              </div>
+              <p>
+                A lightweight static scan for top common web application security issues and unsafe patterns (DOM XSS sinks, exposed client secrets or token storage, and unvalidated open redirects) rather than a deep security audit. Excluded during Lighthouse JSON runs.
+              </p>
+            </div>
+          }
+        </header>
+
+        <!-- Commit Cards List -->
+        <div class="report-list" role="region" aria-label="Generated git commits">
+          @for (commit of audit.filteredCommits(); track commit.id; let i = $index) {
+            <article class="commit-card" [class.is-unchecked]="!isSelected(commit.id)">
+              <div class="commit-card__main">
+                <div class="commit-card__content">
+                  <div class="commit-card__eyebrow">
+                    <span class="commit-index">{{ (i + 1).toString().padStart(2, '0') }}</span>
+                    <span class="commit-cat-badge">{{ commit.categoryLabel }}</span>
+                    @if (commit.securityContext) {
+                      <span class="security-light-badge">{{ commit.securityContext }}</span>
+                    }
+                    <span class="commit-sha-pill">{{ commit.sha }}</span>
+                    @if (commit.securityPattern) {
+                      <span class="commit-pattern-tag">{{ commit.securityPattern }}</span>
+                    }
+                  </div>
+
+                  <h2 class="commit-card__title">{{ imperativeHeadline(commit.title) }}</h2>
+                  <p class="commit-card__summary">{{ detailTense(commit.summary, 'done', 280) }}</p>
+
+                  <!-- LHR JSON Area Improved Callout (Shown in Run 2) -->
+                  @if (session.runPhase === 'lhr' && commit.lhrAreaImproved) {
+                    <div class="lhr-target-box">
+                      <div class="lhr-target-row">
+                        <span class="lhr-target-key">Category and audit improved:</span>
+                        <code>{{ plainText(commit.lhrAreaImproved) }}</code>
+                      </div>
+                      @if (commit.lhrTargetSelector) {
+                        <div class="lhr-target-row">
+                          <span class="lhr-target-key">JSON target node:</span>
+                          <code>{{ plainText(commit.lhrTargetSelector) }}</code>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <div class="commit-card__footer">
+                    <button
+                      type="button"
+                      class="diff-toggle-btn"
+                      (click)="audit.toggleDiff(commit.id)"
+                    >
+                      {{ isDiffExpanded(commit.id) ? 'Hide diff' : 'View diff' }}
+                    </button>
+                    <span class="commit-files-text">
+                      {{ commit.files.join(', ') }}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="friendly-check-btn"
+                  [class.is-checked]="isSelected(commit.id)"
+                  role="checkbox"
+                  [attr.aria-checked]="isSelected(commit.id)"
+                  [attr.aria-label]="'Include ' + imperativeHeadline(commit.title)"
+                  (click)="audit.toggleCommitSelection(commit.id)"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                    <path d="M4.5 10.5l3.8 3.8 7.2-7.6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </button>
+              </div>
+
+              @if (isDiffExpanded(commit.id)) {
+                @defer (on immediate) {
+                  <div class="commit-diff-drawer">
+                    @for (line of splitDiffLines(commit.diff); track $index) {
+                      <div
+                        class="diff-line"
+                        [class.diff-line--meta]="line.type === 'meta'"
+                        [class.diff-line--hunk]="line.type === 'hunk'"
+                        [class.diff-line--add]="line.type === 'add'"
+                        [class.diff-line--del]="line.type === 'del'"
+                      >{{ line.text }}</div>
+                    }
+                  </div>
+                }
+              }
+            </article>
+          }
+        </div>
+
+        <!-- Second Run Prompt Card (Shown on Run 1 Report) -->
+        @if (session.runPhase === 'static') {
+          <section class="second-run-banner">
+            <div>
+              <span class="soft-pill soft-pill--accent">Run 2 · deeper analysis</span>
+              <h2 class="second-run-banner__title">Have a Lighthouse report JSON?</h2>
+              <p class="second-run-banner__desc">
+                Add a Lighthouse Result (LHR) <code>.json</code> file to run a second pass that identifies which categories improve with the code and targets specific failing LHR audits and DOM selectors.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="secondary-flow-btn"
+              (click)="audit.openLighthouseJsonStep()"
+            >
+              <span>Add Lighthouse JSON →</span>
+            </button>
+          </section>
+        }
+
+        <!-- Self-Service Git Patch & CLI Guide Drawer -->
+        @if (audit.isPatchDrawerOpen()) {
+          @defer (on immediate) {
+            @let bundle = audit.patchBundle();
+            @let fallback = audit.buildClientSidePatchFallback();
+            <section class="patch-guide-card">
+              <div class="patch-guide-card__head">
+                <div>
+                  <h2 class="patch-guide-card__title">Apply commits locally</h2>
+                  <p class="patch-guide-card__desc">
+                    <code>{{ bundle?.filename || fallback.filename }}</code> has been generated for your selected commits:
+                  </p>
+                </div>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                  <button
+                    type="button"
+                    class="secondary-flow-btn"
+                    (click)="copyText('patchRaw', bundle?.patchContent || fallback.content)"
+                  >
+                    <span>{{ copiedKey() === 'patchRaw' ? 'Copied .patch!' : 'Copy .patch content' }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="primary-flow-btn"
+                    (click)="audit.triggerBrowserDownload(bundle?.filename || fallback.filename, bundle?.patchContent || fallback.content, bundle?.downloadUrl)"
+                  >
+                    <span>Download .patch again</span>
+                  </button>
+                </div>
+              </div>
+
+              @if (bundle) {
+                <div class="cli-steps-grid">
+                  <div class="cli-box">
+                    <div class="cli-box__top">
+                      <span>1. Create a branch</span>
+                      <button
+                        type="button"
+                        class="copy-btn"
+                        (click)="copyText('s1', bundle.instructions.branchCmd)"
+                      >
+                        {{ copiedKey() === 's1' ? 'Copied' : 'Copy' }}
+                      </button>
+                    </div>
+                    <pre><code>{{ bundle.instructions.branchCmd }}</code></pre>
+                  </div>
+
+                  <div class="cli-box">
+                    <div class="cli-box__top">
+                      <span>2. Apply patch</span>
+                      <button
+                        type="button"
+                        class="copy-btn"
+                        (click)="copyText('s2', bundle.instructions.applyAmCmd)"
+                      >
+                        {{ copiedKey() === 's2' ? 'Copied' : 'Copy' }}
+                      </button>
+                    </div>
+                    <pre><code>{{ bundle.instructions.applyAmCmd }}</code></pre>
+                  </div>
+
+                  <div class="cli-box">
+                    <div class="cli-box__top">
+                      <span>3. Verify and push</span>
+                      <button
+                        type="button"
+                        class="copy-btn"
+                        (click)="copyText('s3', bundle.instructions.verifyCmd + ' && ' + bundle.instructions.pushCmd)"
+                      >
+                        {{ copiedKey() === 's3' ? 'Copied' : 'Copy' }}
+                      </button>
+                    </div>
+                    <pre><code>{{ bundle.instructions.verifyCmd }} &amp;&amp; {{ bundle.instructions.pushCmd }}</code></pre>
+                  </div>
+                </div>
+              }
+            </section>
+          }
+        }
+
+        <!-- Sticky Bottom Action Bar -->
+        <footer class="report-action-bar">
+          <div class="report-action-bar__summary">
+            <strong>{{ audit.selectedCount() }} of {{ audit.totalCommitsCount() }}</strong> selected
+          </div>
+
+          <div class="report-action-bar__buttons">
+            <button
+              type="button"
+              class="secondary-flow-btn"
+              (click)="audit.openPatchGuideAndDownload()"
+            >
+              <span>Download .patch</span>
+            </button>
+
+            <button
+              type="button"
+              class="primary-flow-btn"
+              [disabled]="audit.selectedCount() === 0 || audit.isCreatingPr()"
+              (click)="audit.createPullRequest()"
+            >
+              <span>
+                {{
+                  audit.isCreatingPr()
+                    ? 'Preparing pull request...'
+                    : 'Create pull request'
+                }}
+              </span>
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M4.5 10h11M10.5 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+        </footer>
+      </div>
+    </section>
+  }
+
+  <!-- =====================================================================
+       STEP 4: 1-CLICK TERMINAL PR SUBMISSION (`git am` + `gh pr create`) + RUN 2
+       ===================================================================== -->
+  @if (audit.step() === 4 && audit.prResult(); as pr) {
+    <section
+      class="flow-view is-active"
+      [class.is-exiting]="audit.isTransitioning()"
+      aria-labelledby="pr-done-heading"
+    >
+      <div class="pr-done-shell">
+        <div class="pr-done-card">
+          <div class="pr-done-icon" aria-hidden="true">
+            <svg viewBox="0 0 56 56" fill="none">
+              <rect width="56" height="56" rx="20" fill="var(--accent-soft)" />
+              <path
+                d="M19 28.5l6 6 12.5-12.5"
+                stroke="var(--accent-primary)"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+
+          <h1 id="pr-done-heading" class="pr-done-title">
+            Submit pull request from terminal
+          </h1>
+          <p class="pr-done-subtitle">
+            Copy and run this command in your local repository terminal to create the branch, apply all selected atomic commits via <code>git am</code>, push, and open your pull request using your local <code>git</code> and <code>gh</code> credentials.
+          </p>
+
+          <div class="pr-cli-card">
+            <div class="pr-cli-card__top">
+              <div class="pr-cli-tabs" role="tablist" aria-label="Terminal command format">
+                <button
+                  type="button"
+                  class="pr-cli-tab"
+                  [class.is-active]="audit.prCliMode() === 'inline'"
+                  role="tab"
+                  [attr.aria-selected]="audit.prCliMode() === 'inline'"
+                  (click)="audit.prCliMode.set('inline')"
+                >
+                  Self-contained (inline patch + gh pr)
+                </button>
+                <button
+                  type="button"
+                  class="pr-cli-tab"
+                  [class.is-active]="audit.prCliMode() === 'short'"
+                  role="tab"
+                  [attr.aria-selected]="audit.prCliMode() === 'short'"
+                  (click)="audit.prCliMode.set('short')"
+                >
+                  With downloaded .patch file
+                </button>
+              </div>
+              <button
+                type="button"
+                class="primary-flow-btn pr-cli-copy-btn"
+                (click)="copyText('prCli', currentPrCliCommand())"
+              >
+                <span>{{ copiedKey() === 'prCli' ? '✓ Copied to clipboard!' : 'Copy terminal command' }}</span>
+              </button>
+            </div>
+            <pre class="pr-cli-pre"><code>{{ currentPrCliCommand() }}</code></pre>
+          </div>
+
+          <div class="pr-included-section">
+            <div class="pr-included-section__head">
+              <span>Included commits</span>
+              <span>{{ pr.selectedCommits.length }}</span>
+            </div>
+            <ul class="pr-included-list">
+              @for (c of pr.selectedCommits; track c.id) {
+                <li>
+                  <span>{{ imperativeHeadline(c.title) }}</span>
+                  <span class="commit-sha-pill">{{ c.sha }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <!-- Prompt to run the Second Pass with a Lighthouse Report JSON -->
+          @if (pr.runPhase !== 'lhr') {
+            <div class="lhr-next-run-box">
+              <span class="soft-pill soft-pill--accent">Second run</span>
+              <h3>Not quite done yet?</h3>
+              <p>
+                Upload or paste a Lighthouse Result (LHR) <code>.json</code> report to see which categories improve with the code and generate targeted fixes for failing LHR audits.
+              </p>
+              <button
+                type="button"
+                class="primary-flow-btn"
+                style="width:100%"
+                (click)="audit.openLighthouseJsonStep()"
+              >
+                <span>Add Lighthouse report JSON</span>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M4.5 10h11M10.5 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </div>
+          }
+
+          <div class="pr-done-actions">
+            <button
+              type="button"
+              class="secondary-flow-btn"
+              (click)="onBack()"
+            >
+              ← Back to report
+            </button>
+            <button
+              type="button"
+              class="secondary-flow-btn"
+              (click)="audit.openPatchGuideAndDownload()"
+            >
+              Download .patch
+            </button>
+            <button
+              type="button"
+              class="secondary-flow-btn"
+              (click)="audit.transitionToStep(1)"
+            >
+              New audit
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- =====================================================================
+       STEP 5: SECOND RUN — ADD LIGHTHOUSE REPORT JSON (LHR)
+       ===================================================================== -->
+  @if (audit.step() === 5) {
+    <section
+      class="flow-view is-active"
+      [class.is-exiting]="audit.isTransitioning()"
+      aria-labelledby="lhr-input-heading"
+    >
+      <div class="lhr-input-shell">
+        <span class="soft-pill soft-pill--accent">Second run · Lighthouse JSON</span>
+        <h1 id="lhr-input-heading" class="lhr-input-title">Add Lighthouse report JSON</h1>
+        <p class="lhr-input-subtitle">
+          Provide a Lighthouse Result (LHR) <code>.json</code> file to correlate failing <code>audits</code>, <code>metricSavings</code>, and DOM selectors against the repository source code.
+        </p>
+
+        <form class="lhr-form" (ngSubmit)="onStartLhrAudit()" novalidate>
+          <div class="lhr-upload-row">
+            <label class="lhr-file-label">
+              <input
+                type="file"
+                accept=".json,application/json"
+                class="sr-only"
+                (change)="onLhrFileSelected($event)"
+              />
+              <span>Upload .json file</span>
+            </label>
+
+            <button
+              type="button"
+              class="quiet-demo-link"
+              (click)="audit.loadSampleLhrJson()"
+            >
+              Load sample Lighthouse JSON
+            </button>
+          </div>
+
+          <p class="upload-legal-disclaimer">
+            By using this feature, you confirm that you have the necessary rights to any content that you upload. Do not generate content that infringes on others’ intellectual property or privacy rights. Your use of this generative AI service is subject to our <a href="https://policies.google.com/terms/generative-ai/use-policy" target="_blank" rel="noopener noreferrer">Prohibited Use Policy</a>.<br />
+            Please note that uploads, including those from Google Workspace, may be used to develop and improve Google products and services in accordance with our <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">terms</a>.
+          </p>
+
+          @if (audit.lhrFileName()) {
+            <div class="lhr-file-pill">Loaded: {{ audit.lhrFileName() }}</div>
+          }
+
+          <label for="lhr-json-textarea" class="sr-only">Lighthouse Result (LHR) JSON</label>
+          <textarea
+            id="lhr-json-textarea"
+            name="lhrJson"
+            class="lhr-textarea"
+            rows="9"
+            placeholder="{“lighthouseVersion”: “12.2.0”, “categories”: {...}, “audits”: {...}}"
+            [ngModel]="audit.lhrJsonInput()"
+            (ngModelChange)="audit.lhrJsonInput.set($event)"
+            spellcheck="false"
+          ></textarea>
+
+          <button type="submit" class="primary-flow-btn">
+            <span>Run Lighthouse JSON audit</span>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M4.5 10h11M10.5 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </form>
+      </div>
+    </section>
+  }
+</main>

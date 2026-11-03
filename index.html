@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fresnel</title>
+    <meta
+      name="description"
+      content="Fresnel — focused code audits across Performance, Accessibility, Best Practices, SEO, and Light Web Application security findings."
+    />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Google+Sans+Code:wght@400;500;600&family=Google+Sans:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#app-stage">Skip to main content</a>
+
+    <header class="topbar" role="banner">
+      <div class="topbar__left">
+        <button
+          type="button"
+          id="nav-back-btn"
+          class="icon-pill-btn"
+          aria-label="Go to previous step"
+          hidden
+        >
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M12.5 4.5L7 10l5.5 5.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="topbar__center" aria-live="polite">
+        <span id="step-counter-label" class="step-counter">Run 1 · Step 1 / 4</span>
+      </div>
+
+      <div class="topbar__right">
+        <button
+          type="button"
+          id="theme-toggle-btn"
+          class="icon-pill-btn"
+          aria-label="Toggle light and dark theme"
+          title="Toggle light / dark mode"
+        >
+          <svg class="icon-moon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <path d="M17.2 11.8A7.5 7.5 0 1 1 8.2 2.8a5.8 5.8 0 0 0 9 9z" stroke-linejoin="round" />
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <circle cx="10" cy="10" r="3.8" />
+            <path d="M10 2v2M10 16v2M3.6 3.6l1.4 1.4M15 15l1.4 1.4M2 10h2M16 10h2M3.6 16.4L5 15M15 5l1.4-1.4" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="app-stage" class="stage" tabindex="-1">
+      <!-- ===================================================================
+           VIEW 1: SIMPLY THE LOGO + GIT REPO FIELD + BUTTON
+           =================================================================== -->
+      <section
+        id="view-1"
+        class="flow-view is-active"
+        aria-labelledby="view-1-title"
+      >
+        <div class="intro-shell">
+          <div class="fresnel-identity">
+            <button
+              type="button"
+              class="brand-hover-target"
+              aria-describedby="fresnel-lore-tooltip"
+            >
+              <div class="logo-showcase" aria-hidden="true">
+                <svg class="fresnel-hero-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    d="M49.65 14.8C50.25 14.8 50.75 15.3 50.75 15.9V17.95C54.65 18.55 57.62 20.85 57.62 23.65C57.62 24.05 57.25 24.35 56.54 24.45V29.45C57.95 30.15 59.18 31.35 59.18 32.95C59.18 34.65 57.85 35.95 56.25 36.75L59.08 78.55H60.35V81.85H63.38V85.15H36.52V81.85H39.55V78.55H40.82L43.65 36.75C42.05 35.95 40.72 34.65 40.72 32.95C40.72 31.35 41.95 30.15 43.36 29.45V24.45C42.65 24.35 42.28 24.05 42.28 23.65C42.28 20.85 45.25 18.55 49.15 17.95V15.9C49.15 15.3 49.35 14.8 49.65 14.8ZM44.73 24.95V29.05H54.69V24.95H44.73Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </div>
+
+              <span id="view-1-title" class="brand-display">
+                Fresnel
+                <span class="brand-info-dot" aria-hidden="true">?</span>
+              </span>
+            </button>
+
+            <div id="fresnel-lore-tooltip" role="tooltip" class="fresnel-tooltip">
+              <div class="fresnel-tooltip__header">
+                <span class="fresnel-tooltip__name">Augustin-Jean Fresnel (1788–1827)</span>
+                <span class="fresnel-tooltip__phonetic">/freɪˈnɛl/</span>
+              </div>
+              <blockquote class="fresnel-tooltip__quote">
+                “Instead of a single heavy dome of glass, concentric stepped prism rings capture scattered light from every angle and refract it into one extraordinary, miles-long beam.”
+              </blockquote>
+              <p class="fresnel-tooltip__desc">
+                Just as the Fresnel lens concentrates a lighthouse’s beam to guide ships through fog, Fresnel takes the inspection beam of Lighthouse and focuses it onto raw source code—refining scattered issues across performance, accessibility, best practices, SEO, and light web application security findings into sharp, self-contained git commits.
+              </p>
+            </div>
+          </div>
+
+          <form id="repo-form" class="minimal-repo-form" novalidate>
+            <label for="repo-url-input" class="sr-only">GitHub repository URL</label>
+            <div class="input-pill-shell">
+              <input
+                id="repo-url-input"
+                type="url"
+                class="repo-field"
+                placeholder="https://github.com/owner/repository"
+                value=""
+                autocomplete="off"
+                spellcheck="false"
+                required
+              />
+            </div>
+
+            <button type="submit" class="primary-flow-btn" id="start-audit-btn">
+              <span>Start audit</span>
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M4.5 10h11M10.5 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+
+            <div class="demo-mode-strip">
+              <button type="button" class="quiet-demo-link" id="start-demo-btn">
+                Or try demo mode
+              </button>
+            </div>
+
+            <p class="upload-legal-disclaimer">
+              By using this feature, you confirm that you have the necessary rights to any content that you upload. Do not generate content that infringes on others’ intellectual property or privacy rights. Your use of this generative AI service is subject to our <a href="https://policies.google.com/terms/generative-ai/use-policy" target="_blank" rel="noopener noreferrer">Prohibited Use Policy</a>.<br />
+              Please note that uploads, including those from Google Workspace, may be used to develop and improve Google products and services in accordance with our <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">terms</a>.
+            </p>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 2: MANAGED AGENT WORKING (RUN 1 & RUN 2)
+           =================================================================== -->
+      <section
+        id="view-2"
+        class="flow-view"
+        aria-labelledby="process-live-headline"
+        hidden
+      >
+        <div class="narrative-shell">
+          <div class="narrative-meta">
+            <span class="breathing-dot" aria-hidden="true"></span>
+            <span id="process-phase-label" class="narrative-phase">Auditing accessibility</span>
+            <span class="narrative-sep">·</span>
+            <span id="process-repo-label" class="narrative-repo">fresnel-sandbox/lumina-web-app</span>
+          </div>
+
+          <div id="narrative-hero-block" class="narrative-hero">
+            <h1 id="process-live-headline" class="narrative-headline" aria-live="polite">
+              Inspect repository source tree
+            </h1>
+            <p id="process-live-body" class="narrative-body">
+              Scanning templates, stylesheets, and routing across Performance, Accessibility, Best practices, and SEO.
+            </p>
+          </div>
+
+          <div class="narrative-progress">
+            <div
+              class="narrative-progress__track narrative-progress__track--indeterminate"
+              role="progressbar"
+              aria-label="Code audit in progress"
+            >
+              <div id="process-progress-fill" class="narrative-progress__fill"></div>
+            </div>
+            <div class="narrative-progress__meta">
+              <span id="process-step-ratio">Inspecting repository code</span>
+              <button type="button" id="skip-to-report-btn" class="text-action-btn" hidden>
+                Skip to report →
+              </button>
+            </div>
+          </div>
+
+          <div class="narrative-journal" aria-label="Completed inspection notes">
+            <ol id="narrative-journal-list" class="journal-list"></ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 3: AUDIT REPORT & COMMIT SELECTION (RUN 1 & RUN 2)
+           =================================================================== -->
+      <section
+        id="view-3"
+        class="flow-view"
+        aria-labelledby="report-heading"
+        hidden
+      >
+        <div class="report-shell">
+          <header class="report-header">
+            <div class="report-header__top">
+              <span id="report-repo-pill" class="soft-pill">fresnel-sandbox/lumina-web-app</span>
+            </div>
+            <h1 id="report-heading" class="report-title">Code audit report</h1>
+            <p id="report-subtitle" class="report-subtitle">
+              Select the static code commits you would like to include in a pull request, download as a patch, or continue to a second run with a Lighthouse JSON report.
+            </p>
+
+            <!-- CATEGORIES IMPROVED WITH CODE (NO NUMERIC SCORES) -->
+            <div id="report-categories-improved" class="categories-improved-strip" aria-label="Categories improved with code">
+              <div class="categories-improved-strip__head">
+                <span class="categories-improved-strip__title">Categories improved with code</span>
+                <span class="categories-improved-strip__note">Static code audit · verified by commit coverage</span>
+              </div>
+              <div id="categories-improved-grid" class="categories-improved-grid">
+                <div class="category-improved-card">
+                  <div class="category-improved-card__top">
+                    <span class="category-improved-card__check" aria-hidden="true">✓</span>
+                    <span class="category-improved-card__name">Performance</span>
+                  </div>
+                  <span class="category-improved-card__meta" id="cat-improved-performance">Improved · 3 commits</span>
+                </div>
+                <div class="category-improved-card">
+                  <div class="category-improved-card__top">
+                    <span class="category-improved-card__check" aria-hidden="true">✓</span>
+                    <span class="category-improved-card__name">Accessibility</span>
+                  </div>
+                  <span class="category-improved-card__meta" id="cat-improved-accessibility">Improved · 3 commits</span>
+                </div>
+                <div class="category-improved-card">
+                  <div class="category-improved-card__top">
+                    <span class="category-improved-card__check" aria-hidden="true">✓</span>
+                    <span class="category-improved-card__name">Best practices</span>
+                  </div>
+                  <span class="category-improved-card__meta" id="cat-improved-best-practices">Improved · 3 commits</span>
+                </div>
+                <div class="category-improved-card">
+                  <div class="category-improved-card__top">
+                    <span class="category-improved-card__check" aria-hidden="true">✓</span>
+                    <span class="category-improved-card__name">SEO</span>
+                  </div>
+                  <span class="category-improved-card__meta" id="cat-improved-seo">Improved · 3 commits</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="report-controls">
+              <div class="category-pills" role="tablist" aria-label="Filter by audit category">
+                <button type="button" class="cat-pill is-active" data-cat-filter="all" role="tab" aria-selected="true">
+                  All <span id="pill-count-all">15</span>
+                </button>
+                <button type="button" class="cat-pill" data-cat-filter="performance" role="tab" aria-selected="false">
+                  Performance <span id="pill-count-performance">3</span>
+                </button>
+                <button type="button" class="cat-pill" data-cat-filter="accessibility" role="tab" aria-selected="false">
+                  Accessibility <span id="pill-count-accessibility">3</span>
+                </button>
+                <button type="button" class="cat-pill" data-cat-filter="best-practices" role="tab" aria-selected="false">
+                  Best practices <span id="pill-count-best-practices">3</span>
+                </button>
+                <button type="button" class="cat-pill" data-cat-filter="seo" role="tab" aria-selected="false">
+                  SEO <span id="pill-count-seo">3</span>
+                </button>
+                <button type="button" id="pill-btn-security" class="cat-pill" data-cat-filter="security" role="tab" aria-selected="false">
+                  Web application security findings
+                  <span class="cat-pill__context">Light</span>
+                  <span id="pill-count-security">3</span>
+                </button>
+              </div>
+
+              <div class="bulk-select-links">
+                <button type="button" id="select-all-btn" class="text-action-btn">Select all</button>
+                <span class="narrative-sep">·</span>
+                <button type="button" id="clear-all-btn" class="text-action-btn">Clear</button>
+              </div>
+            </div>
+
+            <div id="security-context-note" class="security-context-note" role="note" hidden>
+              <div class="security-context-note__head">
+                <span class="security-light-badge">Light</span>
+                <strong>Web application security findings</strong>
+              </div>
+              <p>
+                A lightweight static scan for top common web application security issues and unsafe patterns (DOM XSS sinks, exposed client secrets or token storage, and unvalidated open redirects) rather than a deep security audit. Excluded during Lighthouse JSON runs.
+              </p>
+            </div>
+          </header>
+
+          <div id="report-commits-list" class="report-list" role="region" aria-label="Generated git commits"></div>
+
+          <!-- Second Run Banner (Shown on Run 1 Report) -->
+          <section id="second-run-banner" class="second-run-banner">
+            <div>
+              <span class="soft-pill soft-pill--accent">Run 2 · Deeper analysis</span>
+              <h2 class="second-run-banner__title">Have a Lighthouse report JSON?</h2>
+              <p class="second-run-banner__desc">
+                Add a Lighthouse Result (LHR) <code>.json</code> file to run a second pass that identifies which categories improve with the code and targets specific failing LHR audits and DOM selectors.
+              </p>
+            </div>
+            <button type="button" id="open-lhr-step-btn" class="secondary-flow-btn">
+              <span>Add Lighthouse JSON →</span>
+            </button>
+          </section>
+
+          <section id="patch-guide-card" class="patch-guide-card" hidden>
+            <div class="patch-guide-card__head">
+              <div>
+                <h2 class="patch-guide-card__title">Apply commits locally</h2>
+                <p class="patch-guide-card__desc">
+                  Download the multi-commit <code>git format-patch</code> file and apply it in your repository:
+                </p>
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <button type="button" id="copy-raw-patch-btn" class="secondary-flow-btn">
+                  <span>Copy .patch content</span>
+                </button>
+                <button type="button" id="download-patch-file-btn" class="primary-flow-btn">
+                  <span id="download-patch-btn-text">Download .patch again</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="cli-steps-grid">
+              <div class="cli-box">
+                <div class="cli-box__top">
+                  <span>1. Create a branch</span>
+                  <button type="button" class="copy-btn" data-copy="cmd-step-1">Copy</button>
+                </div>
+                <pre><code id="cmd-step-1">git checkout -b fresnel/lighthouse-audit origin/main</code></pre>
+              </div>
+
+              <div class="cli-box">
+                <div class="cli-box__top">
+                  <span>2. Apply patch</span>
+                  <button type="button" class="copy-btn" data-copy="cmd-step-2">Copy</button>
+                </div>
+                <pre><code id="cmd-step-2">git am --3way &lt; ~/Downloads/fresnel-lighthouse-audit.patch</code></pre>
+              </div>
+
+              <div class="cli-box">
+                <div class="cli-box__top">
+                  <span>3. Verify &amp; push</span>
+                  <button type="button" class="copy-btn" data-copy="cmd-step-3">Copy</button>
+                </div>
+                <pre><code id="cmd-step-3">git log --oneline -n 12 &amp;&amp; git push -u origin fresnel/lighthouse-audit</code></pre>
+              </div>
+            </div>
+          </section>
+
+          <footer class="report-action-bar">
+            <div class="report-action-bar__summary">
+              <strong id="selected-count-num">12 of 12</strong> selected
+            </div>
+
+            <div class="report-action-bar__buttons">
+              <button type="button" id="toggle-patch-guide-btn" class="secondary-flow-btn">
+                <span>Download .patch</span>
+              </button>
+
+              <button type="button" id="create-pr-flow-btn" class="primary-flow-btn">
+                <span id="create-pr-btn-text">Create pull request</span>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M4.5 10h11M10.5 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </div>
+          </footer>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 4: 1-CLICK TERMINAL PR SUBMISSION (`git am` + `gh pr create`) + RUN 2
+           =================================================================== -->
+      <section
+        id="view-4"
+        class="flow-view"
+        aria-labelledby="pr-done-heading"
+        hidden
+      >
+        <div class="pr-done-shell">
+          <div class="pr-done-card">
+            <div class="pr-done-icon" aria-hidden="true">
+              <svg viewBox="0 0 56 56" fill="none">
+                <rect width="56" height="56" rx="20" fill="var(--accent-soft)" />
+                <path d="M19 28.5l6 6 12.5-12.5" stroke="var(--accent-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+
+            <h1 id="pr-done-heading" class="pr-done-title">Submit pull request from terminal</h1>
+            <p id="pr-done-subtitle" class="pr-done-subtitle">
+              Copy and run this command in your local repository terminal to create the branch, apply all selected atomic commits via <code>git am</code>, push, and open your pull request using your local <code>git</code> and <code>gh</code> credentials.
+            </p>
+
+            <div class="pr-cli-card">
+              <div class="pr-cli-card__top">
+                <div class="pr-cli-tabs" role="tablist" aria-label="Terminal command format">
+                  <button type="button" id="pr-cli-tab-inline" class="pr-cli-tab is-active" role="tab" aria-selected="true">
+                    Self-contained (inline patch + gh pr)
+                  </button>
+                  <button type="button" id="pr-cli-tab-short" class="pr-cli-tab" role="tab" aria-selected="false">
+                    With downloaded .patch file
+                  </button>
+                </div>
+                <button type="button" id="copy-pr-cli-btn" class="primary-flow-btn pr-cli-copy-btn">
+                  <span id="copy-pr-cli-btn-text">Copy terminal command</span>
+                </button>
+              </div>
+              <pre class="pr-cli-pre"><code id="pr-cli-command-code">git checkout -b fresnel/code-audit && git am --3way ... && gh pr create --fill</code></pre>
+            </div>
+
+            <div class="pr-subtle-link-wrap">
+              <a
+                id="pr-final-link"
+                href="https://github.com/fresnel-sandbox/lumina-web-app/compare"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="pr-subtle-link"
+              >
+                <span id="pr-final-url">Open GitHub compare &amp; pull request page</span>
+                <span class="pr-subtle-link__branch" id="pr-final-branch">(fresnel/code-audit → main)</span>
+                <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+
+            <div class="pr-included-section">
+              <div class="pr-included-section__head">
+                <span>Included commits</span>
+                <span id="pr-final-commit-count">12</span>
+              </div>
+              <ul id="pr-final-commit-list" class="pr-included-list"></ul>
+            </div>
+
+            <div id="pr-next-run-box" class="lhr-next-run-box">
+              <span class="soft-pill soft-pill--accent">Second run</span>
+              <h3>Not quite done yet?</h3>
+              <p>
+                Upload or paste a Lighthouse Result (LHR) <code>.json</code> report to see which categories improve with the code and generate targeted fixes for failing LHR audits.
+              </p>
+              <button
+                type="button"
+                id="pr-open-lhr-btn"
+                class="primary-flow-btn"
+                style="width:100%"
+              >
+                <span>Add Lighthouse report JSON</span>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M4.5 10h11M10.5 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="pr-done-actions">
+              <button type="button" id="pr-back-to-report-btn" class="secondary-flow-btn">
+                ← Back to report
+              </button>
+              <button type="button" id="pr-download-patch-btn" class="secondary-flow-btn">
+                Download .patch
+              </button>
+              <button type="button" id="start-new-audit-btn" class="secondary-flow-btn">
+                New audit
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           VIEW 5: SECOND RUN — ADD LIGHTHOUSE REPORT JSON (LHR)
+           =================================================================== -->
+      <section
+        id="view-5"
+        class="flow-view"
+        aria-labelledby="lhr-input-heading"
+        hidden
+      >
+        <div class="lhr-input-shell">
+          <span class="soft-pill soft-pill--accent">Second run · Lighthouse JSON</span>
+          <h1 id="lhr-input-heading" class="lhr-input-title">Add Lighthouse report JSON</h1>
+          <p class="lhr-input-subtitle">
+            Provide a Lighthouse Result (LHR) <code>.json</code> file to correlate failing <code>audits</code>, <code>metricSavings</code>, and DOM selectors against the repository source code.
+          </p>
+
+          <form id="lhr-form" class="lhr-form" novalidate>
+            <div class="lhr-upload-row">
+              <label class="lhr-file-label">
+                <input
+                  type="file"
+                  id="lhr-file-input"
+                  accept=".json,application/json"
+                  class="sr-only"
+                />
+                <span>Upload .json file</span>
+              </label>
+
+              <button type="button" id="load-sample-lhr-btn" class="quiet-demo-link">
+                Load sample Lighthouse JSON
+              </button>
+            </div>
+
+            <p class="upload-legal-disclaimer">
+              By using this feature, you confirm that you have the necessary rights to any content that you upload. Do not generate content that infringes on others’ intellectual property or privacy rights. Your use of this generative AI service is subject to our <a href="https://policies.google.com/terms/generative-ai/use-policy" target="_blank" rel="noopener noreferrer">Prohibited Use Policy</a>.<br />
+              Please note that uploads, including those from Google Workspace, may be used to develop and improve Google products and services in accordance with our <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">terms</a>.
+            </p>
+
+            <div id="lhr-file-pill" class="lhr-file-pill" hidden></div>
+
+            <label for="lhr-json-textarea" class="sr-only">Lighthouse Result (LHR) JSON</label>
+            <textarea
+              id="lhr-json-textarea"
+              class="lhr-textarea"
+              rows="9"
+              placeholder='{"lighthouseVersion": "12.2.0", "categories": {...}, "audits": {...}}'
+              spellcheck="false"
+            ></textarea>
+
+            <button type="submit" class="primary-flow-btn">
+              <span>Run Lighthouse JSON audit</span>
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M4.5 10h11M10.5 5l5 5-5 5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

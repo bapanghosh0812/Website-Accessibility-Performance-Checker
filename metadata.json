@@ -1,0 +1,8 @@
+{
+  "name": "Website Accessibility & Performance Checker - Managed Agent",
+  "description": "Lighthouse & Light Web Application Code Audit powered by a Gemini Managed Agent.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

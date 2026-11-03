@@ -1,0 +1,4 @@
+id: fresnel-code-auditor
+base_agent: antigravity-preview-09-2026
+gcp_project: phantom-gdemo-1
+description: "Fresnel Managed Agent (Gemini 4 Argon on GCP project phantom-gdemo-1) — static code auditor across Lighthouse categories (Performance, Accessibility, Best Practices, SEO) and Web Application security findings (Light)."
